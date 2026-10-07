@@ -42,3 +42,26 @@ def test_challenge_completed_reaches_player(app):
     assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
         (1, "Well done! You've completed 'Dragon's Lair'!"),
     ]
+
+
+def test_T3_friend_request_reaches_user_1_not_user_3(app):
+    app.social_system.friend_request_sent(3, 1)
+    assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
+        (1, "Player 'Cyra' has sent you a friend request."),
+    ]
+
+
+def test_T3_uses_recipients_preferences_not_senders(app):
+    app.preferences.set_enabled(3, Category.SOCIAL, False)
+    app.social_system.friend_request_sent(3, 1)
+    assert [n.recipient_id for n in app.in_app.delivered] == [1]
+
+    app.preferences.set_enabled(1, Category.SOCIAL, False)
+    app.social_system.friend_request_sent(3, 1)
+    assert [n.recipient_id for n in app.in_app.delivered] == [1]  # second one suppressed
+
+
+def test_disabling_game_events_does_not_block_friend_requests(app):
+    app.preferences.set_enabled(1, Category.GAME, False)
+    app.social_system.friend_request_sent(3, 1)
+    assert [n.recipient_id for n in app.in_app.delivered] == [1]

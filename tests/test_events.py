@@ -2,7 +2,12 @@ import dataclasses
 
 import pytest
 
-from notifications.events import ChallengeCompleted, ItemAcquired, PlayerLeveledUp
+from notifications.events import (
+    ChallengeCompleted,
+    FriendRequestSent,
+    ItemAcquired,
+    PlayerLeveledUp,
+)
 
 
 def test_player_leveled_up_holds_fields():
@@ -61,3 +66,14 @@ def test_challenge_completed_rejects_blank_name(challenge_name):
 def test_challenge_completed_rejects_bad_player_id(player_id):
     with pytest.raises(ValueError):
         ChallengeCompleted(player_id, "Dragon's Lair")
+
+
+def test_friend_request_to_self_is_rejected():
+    with pytest.raises(ValueError):
+        FriendRequestSent(3, 3)
+
+
+@pytest.mark.parametrize(("sender_id", "recipient_id"), [(0, 1), (3, -1), (True, 1), (3, "1")])
+def test_friend_request_rejects_bad_ids(sender_id, recipient_id):
+    with pytest.raises(ValueError):
+        FriendRequestSent(sender_id, recipient_id)

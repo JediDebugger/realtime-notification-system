@@ -5,7 +5,7 @@ argument order: the actor comes first (A-4).
 """
 
 from notifications.bus import EventPublisher
-from notifications.events import ChallengeCompleted, ItemAcquired, PlayerLeveledUp
+from notifications.events import ChallengeCompleted, FriendRequestSent, ItemAcquired, PlayerLeveledUp
 
 
 class GameEngine:
@@ -20,3 +20,11 @@ class GameEngine:
 
     def challenge_completed(self, player_id: int, challenge_name: str) -> None:
         self._publisher.publish(ChallengeCompleted(player_id, challenge_name))
+
+
+class SocialSystem:
+    def __init__(self, publisher: EventPublisher) -> None:
+        self._publisher = publisher
+
+    def friend_request_sent(self, sender_id: int, recipient_id: int) -> None:
+        self._publisher.publish(FriendRequestSent(sender_id, recipient_id))

@@ -8,7 +8,7 @@ from notifications.composers import default_composers
 from notifications.dispatcher import NotificationDispatcher
 from notifications.lookups import ItemCatalog, ItemInfo, PlayerDirectory, Rarity
 from notifications.preferences import InMemoryPreferenceStore
-from notifications.producers import GameEngine
+from notifications.producers import GameEngine, SocialSystem
 
 # Demo seed data, shared by the demo and the acceptance tests (DEC-14).
 DEMO_PLAYERS = {1: "Aria", 2: "Borin", 3: "Cyra", 4: "Dax"}
@@ -22,6 +22,7 @@ DEMO_ITEMS = {
 @dataclass
 class App:
     game_engine: GameEngine
+    social_system: SocialSystem
     preferences: InMemoryPreferenceStore
     in_app: InAppChannel
 
@@ -33,4 +34,9 @@ def build_app() -> App:
     composers = default_composers(PlayerDirectory(DEMO_PLAYERS), ItemCatalog(DEMO_ITEMS))
     dispatcher = NotificationDispatcher(composers, preferences, [in_app])
     bus.subscribe(dispatcher.handle)
-    return App(game_engine=GameEngine(bus), preferences=preferences, in_app=in_app)
+    return App(
+        game_engine=GameEngine(bus),
+        social_system=SocialSystem(bus),
+        preferences=preferences,
+        in_app=in_app,
+    )

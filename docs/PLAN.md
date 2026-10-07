@@ -92,7 +92,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 10 | Player directory and item catalog | Outward | A-5, A-8 |
 | [x] 11 | Item Acquired | Outward | FR-2, T2 |
 | [x] 12 | Challenge Completed | Outward | FR-3 |
-| [ ] 13 | Social system and Friend Request | Outward | FR-5, T3 |
+| [x] 13 | Social system and Friend Request | Outward | FR-5, T3 |
 | [ ] 14 | Friend Accepted | Outward | FR-6, T4 |
 | [ ] 15 | New Follower | Outward | FR-7 |
 | [ ] 16 | PvP attacked and defeated | Outward | FR-4 |

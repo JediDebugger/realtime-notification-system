@@ -7,7 +7,13 @@ the message says. It returns None when the event shouldn't notify anyone.
 import logging
 from collections.abc import Callable
 
-from notifications.events import ChallengeCompleted, Event, ItemAcquired, PlayerLeveledUp
+from notifications.events import (
+    ChallengeCompleted,
+    Event,
+    FriendRequestSent,
+    ItemAcquired,
+    PlayerLeveledUp,
+)
 from notifications.lookups import ItemCatalog, PlayerDirectory, Rarity
 from notifications.notification import Category, Notification, NotificationType
 
@@ -55,9 +61,24 @@ def make_item_acquired_composer(items: ItemCatalog) -> Composer:
     return compose_item_acquired
 
 
+def make_friend_request_composer(players: PlayerDirectory) -> Composer:
+    def compose_friend_request(event: FriendRequestSent) -> Notification:
+        sender = players.display_name(event.sender_id)
+        return Notification(
+            recipient_id=event.recipient_id,
+            type=NotificationType.FRIEND_REQUEST,
+            category=Category.SOCIAL,
+            message=f"Player '{sender}' has sent you a friend request.",
+            data={"actor_id": event.sender_id},
+        )
+
+    return compose_friend_request
+
+
 def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type[Event], Composer]:
     return {
         PlayerLeveledUp: compose_level_up,
         ItemAcquired: make_item_acquired_composer(items),
         ChallengeCompleted: compose_challenge_completed,
+        FriendRequestSent: make_friend_request_composer(players),
     }

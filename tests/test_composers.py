@@ -4,7 +4,12 @@ import pytest
 
 from notifications.app import DEMO_ITEMS, DEMO_PLAYERS
 from notifications.composers import compose_level_up, default_composers
-from notifications.events import ChallengeCompleted, ItemAcquired, PlayerLeveledUp
+from notifications.events import (
+    ChallengeCompleted,
+    FriendRequestSent,
+    ItemAcquired,
+    PlayerLeveledUp,
+)
 from notifications.lookups import ItemCatalog, ItemInfo, PlayerDirectory, Rarity
 from notifications.notification import Category, NotificationType
 
@@ -96,3 +101,21 @@ def test_challenge_goes_to_the_player():
     assert n.type is NotificationType.CHALLENGE_COMPLETED
     assert n.category is Category.GAME
     assert n.data == {"challenge": "Dragon's Lair"}
+
+
+def test_T3_friend_request_message():
+    n = compose(FriendRequestSent(3, 1))
+    assert n.message == "Player 'Cyra' has sent you a friend request."
+
+
+def test_friend_request_goes_to_recipient():
+    n = compose(FriendRequestSent(3, 1))
+    assert n.recipient_id == 1
+    assert n.type is NotificationType.FRIEND_REQUEST
+    assert n.category is Category.SOCIAL
+    assert n.data == {"actor_id": 3}
+
+
+def test_unknown_sender_falls_back_to_id():
+    n = compose(FriendRequestSent(7, 1))
+    assert n.message == "Player '7' has sent you a friend request."
