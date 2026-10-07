@@ -7,6 +7,7 @@ the message says. It returns None when the event shouldn't notify anyone.
 from collections.abc import Callable
 
 from notifications.events import Event, PlayerLeveledUp
+from notifications.lookups import ItemCatalog, PlayerDirectory
 from notifications.notification import Category, Notification, NotificationType
 
 Composer = Callable[[Event], Notification | None]
@@ -22,7 +23,7 @@ def compose_level_up(event: PlayerLeveledUp) -> Notification:
     )
 
 
-def default_composers() -> dict[type[Event], Composer]:
+def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type[Event], Composer]:
     return {
         PlayerLeveledUp: compose_level_up,
     }

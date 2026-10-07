@@ -89,7 +89,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 7 | Game engine, wiring, and demo: **slice complete** | Slice | FR-1, FR-8, FR-15 (T1) |
 | [x] 8 | Per-category preferences and suppression | Outward | FR-12, FR-13, A-13, A-14 |
 | [x] 9 | Delivery failures | Outward | A-17 |
-| [ ] 10 | Player directory and item catalog | Outward | A-5, A-8 |
+| [x] 10 | Player directory and item catalog | Outward | A-5, A-8 |
 | [ ] 11 | Item Acquired | Outward | FR-2, T2 |
 | [ ] 12 | Challenge Completed | Outward | FR-3 |
 | [ ] 13 | Social system and Friend Request | Outward | FR-5, T3 |

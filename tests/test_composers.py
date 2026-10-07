@@ -1,7 +1,9 @@
 import pytest
 
+from notifications.app import DEMO_ITEMS, DEMO_PLAYERS
 from notifications.composers import compose_level_up, default_composers
 from notifications.events import PlayerLeveledUp
+from notifications.lookups import ItemCatalog, PlayerDirectory
 from notifications.notification import Category, NotificationType
 
 
@@ -29,7 +31,7 @@ def test_level_up_type_category_and_data():
 
 
 def test_default_composers_handles_level_up():
-    compose = default_composers()[PlayerLeveledUp]
+    compose = default_composers(PlayerDirectory(DEMO_PLAYERS), ItemCatalog(DEMO_ITEMS))[PlayerLeveledUp]
     n = compose(PlayerLeveledUp(1, 15))
     assert n.recipient_id == 1
     assert n.message == "Congratulations! You've reached level 15!"
