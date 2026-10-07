@@ -97,7 +97,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 15 | New Follower | Outward | FR-7 |
 | [x] 16 | PvP attacked and defeated | Outward | FR-4 |
 | [x] 17 | Full example-usage scenario | Outward | FR-15 |
-| [ ] 18 | README and clean-clone check | Wrap-up | D-1, D-3 |
+| [x] 18 | README and clean-clone check | Wrap-up | D-1, D-3 |
 
 **Slice (Tasks 1–7):** `./run.sh` prints the level-up notification for player 1, end to end through every real component. Everything after that adds behaviour around a pipeline that already works.
 
