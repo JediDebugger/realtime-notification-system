@@ -5,7 +5,7 @@ Simulated game and social systems emit events; the notification system builds ea
 
 ## Quick start
 
-**Prerequisites:** Python 3.11 or newer, macOS or Linux, and internet access on the first build (pip installs pytest).
+**Prerequisites:** Python 3.11 or newer, macOS or Linux, and internet access on the first build (pip downloads setuptools to build the package, and installs pytest).
 
 ```sh
 ./build.sh   # finds Python 3.11+, creates .venv, installs the package, byte-compiles
@@ -103,7 +103,7 @@ GameEngine / SocialSystem --publish(event)--> InProcessEventBus --> Notification
 The decisions a reviewer is most likely to ask about (full log in [ARCHITECTURE.md §7](docs/ARCHITECTURE.md#7-decisions)):
 
 - **Event bus** ([DEC-1, DEC-2](docs/ARCHITECTURE.md#7-decisions)): producers only build events and call `publish()`. They don't know the notification system exists, so new consumers or a real broker can be added without touching them.
-- **Composers** ([DEC-3](docs/ARCHITECTURE.md#7-decisions)): one small function per event type decides the recipient, category, and wording. Adding an event type means adding a composer and one registry line; the dispatcher doesn't change.
+- **Composers** ([DEC-3](docs/ARCHITECTURE.md#7-decisions)): one small function per event type decides the recipient, category, and wording. Adding an event type means adding an event class, a `NotificationType` member, a composer plus its registry line, and a producer method. The bus, dispatcher, preferences and channels don't change.
 - **Two error boundaries** ([DEC-7](docs/ARCHITECTURE.md#7-decisions)):
   - A bug in the notification pipeline can't break the game's call: the bus catches and logs any subscriber failure.
   - A malformed event (a bad id or a blank name) is the caller's bug. It's rejected with `ValueError` when the producer builds it, before anything is published.
@@ -113,7 +113,7 @@ The decisions a reviewer is most likely to ask about (full log in [ARCHITECTURE.
   - "Real-time" here means a notification is delivered before the triggering call returns.
   - The spec puts delivery to the client out of scope, so there is no server or broker.
 
-[ARCHITECTURE.md §3](docs/ARCHITECTURE.md#3-extension-walkthrough) walks through extending the system: a new event type, a push or email channel, per-type preferences, and a message broker.
+[ARCHITECTURE.md §3](docs/ARCHITECTURE.md#3-extension-walkthrough) walks through extending the system: a new event type, a push or email channel, per-type preferences, a message broker, and fan-out to several recipients.
 
 ## Assumptions that change behaviour
 
