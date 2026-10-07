@@ -88,7 +88,7 @@ flowchart LR
 |---|---|---|
 | Events | `events.py` | Immutable facts emitted by producers, one frozen dataclass per event type. Each validates its own shape on construction (A-18). |
 | `GameEngine`, `SocialSystem` | `producers.py` | Simulated producers. Each spec-named method (snake_case, A-4) builds an event and publishes it. No business logic. |
-| `EventPublisher`, `InProcessEventBus` | `bus.py` | Carry events from producers to subscribers, synchronously and in order. |
+| `EventPublisher`, `InProcessEventBus` | `bus.py` | Carry events from producers to subscribers, synchronously and in order. Isolate producers from subscriber failures (DEC-7). |
 | `NotificationDispatcher` | `dispatcher.py` | The spec's pipeline in one place: pick the composer for the event's type, build the `Notification`, check preferences, send it to the channels. Logs and returns the outcome. |
 | Composers | `composers.py` | One per event type. Each decides the recipient, type, category, and message, or returns `None` if the event shouldn't notify anyone (a common or unknown item, A-5). The message templates and the event-type registry live here. |
 | `PlayerDirectory`, `ItemCatalog` | `lookups.py` | In-memory lookups for display names and item name/rarity (A-5, A-8). |
@@ -123,7 +123,7 @@ class EventPublisher(Protocol):
 
 class InProcessEventBus:                           # satisfies EventPublisher
     def subscribe(self, handler: Callable[[Event], object]) -> None: ...
-    def publish(self, event: Event) -> None: ...   # calls every handler, synchronously, in order
+    def publish(self, event: Event) -> None: ...   # calls every handler in order; logs and isolates failures
 
 # notification.py
 class Category(Enum):          GAME = "Game Events"; SOCIAL = "Social Events"
@@ -239,8 +239,13 @@ The other triggers take the same path. Only the composer differs, along with who
 | Composer returns `None` (common or unknown item) | Info logged | `IGNORED` |
 | Recipient has the category disabled | Info logged; the notification is discarded (A-14) | `SUPPRESSED` |
 | A channel raises | Error logged with the notification id; the remaining channels still run (A-17) | `FAILED` only if every channel raised, otherwise `SENT` |
+| A subscriber raises, e.g. a composer bug propagating out of `handle` | The bus logs `Subscriber {name} failed on {EventClass}` at ERROR with the traceback, then runs the remaining subscribers. The producer's call returns normally. | (none: `handle` didn't return) |
 
-The bus doesn't catch exceptions. It has a single subscriber, so isolating subscribers buys nothing, and any exception other than a delivery error is a bug that should surface (DEC-7).
+There are two error boundaries (DEC-7):
+- **The bus** is the boundary between producers and the notification system. It catches any exception a subscriber raises, logs it, and carries on, so a notification bug never breaks `game_engine.player_leveled_up()`.
+- **The dispatcher** catches only delivery errors from channels. A composer bug propagates out of `handle` to the bus, where it's logged with its traceback rather than silently turned into an outcome.
+
+Invalid events still raise at the producer: validation runs when the event is built, before `publish()` is called.
 
 ---
 
@@ -435,7 +440,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 | DEC-4 | Create the `Notification` first, then check preferences. | Check first and skip creation | This follows the spec's stated order (A-14), and the log can show what was suppressed. The cost is negligible. |
 | DEC-5 | `PreferenceStore.allows(notification)` | `is_enabled(user_id, category)` | Same code today, but per-type preferences become a store-only change (§3c). |
 | DEC-6 | The dispatcher sends to a sequence of channels. | A single channel | It's one line, and new channels become wiring-only (§3b). |
-| DEC-7 | Channel errors are caught and logged in the dispatcher. The bus doesn't catch anything. | Catching in the bus; retries | See A-17. With one subscriber, isolating subscribers buys nothing, and other exceptions are bugs that should surface. |
+| DEC-7 | Two error boundaries. The bus catches any exception a subscriber raises, logs it at ERROR with the traceback (naming the subscriber and the event class), and runs the remaining subscribers. Inside the dispatcher, only channel errors are caught (A-17); composer errors propagate to the bus. Event validation still raises at the producer, because it runs before `publish()`. | Let subscriber exceptions propagate to the producer (the original DEC-7); catch everything in the dispatcher; retries | The bus exists so producers don't depend on the notification system. If a notification bug can break `game_engine.player_leveled_up()`, that independence is gone. Catching at the bus keeps the game's call safe and leaves other subscribers unaffected, and the dispatcher doesn't hide composer bugs behind an outcome. **Revised at checkpoint 1**, at the user's request: originally the bus caught nothing, on the grounds that it had a single subscriber. |
 | DEC-8 | Shape validation lives in each event's `__post_init__`. There are no social-state checks. | Validating in the dispatcher; mirroring the social graph | See A-18. Invalid events then fail at the producer call, which is where the bug is. |
 | DEC-9 | Use `Protocol` only at the three swap points: `EventPublisher`, `PreferenceStore`, `NotificationChannel`. | ABCs; protocols everywhere | These are the swap points in §3. A protocol is structural, so in-memory classes and test fakes satisfy it without inheriting from it. |
 | DEC-10 | Our own frozen `Notification` carries `type`, `category`, and `data` as well as `message`. | A message-only notification | See A-1. Future channels can format from the structured data. |

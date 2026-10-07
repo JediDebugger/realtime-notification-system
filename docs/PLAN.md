@@ -44,6 +44,7 @@ Tests in several tasks assert these exact strings. Define each one once, in the 
 | Composer returned `None` (INFO) | `IGNORED {EventClass}: not notification-worthy` | `dispatcher.py` (Task 5) |
 | Suppressed (INFO) | `SUPPRESSED {TYPE} to player {id}: {category label} disabled` | `dispatcher.py` (Task 8) |
 | Channel error (ERROR, with traceback) | `Channel {ChannelClass} failed for notification {notification id}` | `dispatcher.py` (Task 9) |
+| Subscriber error (ERROR, with traceback) | `Subscriber {handler __qualname__} failed on {EventClass}`, e.g. `Subscriber NotificationDispatcher.handle failed on PlayerLeveledUp` | `bus.py` (DEC-7, revised after Task 7) |
 | All channels failed (ERROR) | `FAILED {TYPE} to player {id}: every channel failed` | `dispatcher.py` (Task 9) |
 | Unknown item (WARNING) | `Unknown item id '{item_id}'; not notifying` | `composers.py` (Task 11) |
 
@@ -282,7 +283,7 @@ Demo seed data in `app.py` (Task 10):
 - `test_subscribers_called_in_subscription_order`
 - `test_every_event_reaches_every_subscriber`: 2 events × 2 handlers gives 4 calls in the expected order.
 - `test_publish_without_subscribers_does_nothing`
-- `test_handler_exception_propagates`: the bus doesn't swallow errors (DEC-7).
+- ~~`test_handler_exception_propagates`~~. **Revised after checkpoint 1 (DEC-7):** the bus now isolates subscriber failures. This test was replaced by `test_handler_failure_does_not_reach_the_publisher`, `test_handler_failure_is_logged_with_traceback`, `test_later_subscribers_still_run_after_a_failure`, and `test_composer_bug_does_not_break_the_game_call`. The last of these wires GameEngine → bus → dispatcher with a composer that raises.
 
 **Done when:** the new tests pass and the rest of the suite stays green.
 
@@ -371,7 +372,7 @@ Demo seed data in `app.py` (Task 10):
 - `test_failing_channel_is_logged_and_reported`: with only the failing channel, the outcome is `FAILED`. The ERROR logs name `FailingChannel` and the notification id, and `FAILED ... every channel failed` is logged.
 - `test_other_channels_still_receive_when_one_fails`: with `[failing, recording]`, the outcome is `SENT` and the recording channel received the notification.
 - `test_next_event_is_processed_after_a_failure`: a channel that fails only on its first call. The first `handle` returns `FAILED` and the second returns `SENT`.
-- `test_composer_errors_are_not_swallowed`: an exception raised by a composer propagates out of `handle` (DEC-7).
+- `test_composer_errors_are_not_swallowed`: an exception raised by a composer propagates out of `handle`. The bus, not the dispatcher, is where it's caught and logged (DEC-7).
 
 **Done when:** the new tests pass and the rest of the suite stays green.
 
