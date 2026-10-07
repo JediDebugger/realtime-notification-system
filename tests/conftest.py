@@ -1,5 +1,6 @@
 import pytest
 
+from notifications.app import App, build_app
 from notifications.notification import Notification
 
 
@@ -16,3 +17,8 @@ class RecordingChannel:
 @pytest.fixture
 def recording_channel() -> RecordingChannel:
     return RecordingChannel()
+
+
+@pytest.fixture
+def app() -> App:
+    return build_app()

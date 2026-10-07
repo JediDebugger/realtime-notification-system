@@ -85,7 +85,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 4 | In-app channel | Slice | FR-14, TR-4 |
 | [x] 5 | Dispatcher happy path, default-on preferences | Slice | FR-9, FR-13 (default), FR-14 |
 | [x] 6 | In-process event bus | Slice | FR-8, TR-3 |
-| [ ] 7 | Game engine, wiring, and demo: **slice complete** | Slice | FR-1, FR-8, FR-15 (T1) |
+| [x] 7 | Game engine, wiring, and demo: **slice complete** | Slice | FR-1, FR-8, FR-15 (T1) |
 | [ ] 8 | Per-category preferences and suppression | Outward | FR-12, FR-13, A-13, A-14 |
 | [ ] 9 | Delivery failures | Outward | A-17 |
 | [ ] 10 | Player directory and item catalog | Outward | A-5, A-8 |
