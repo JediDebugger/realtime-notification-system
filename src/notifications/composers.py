@@ -13,6 +13,7 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerFollowed,
     PlayerLeveledUp,
 )
 from notifications.lookups import ItemCatalog, PlayerDirectory, Rarity
@@ -90,6 +91,20 @@ def make_friend_accepted_composer(players: PlayerDirectory) -> Composer:
     return compose_friend_accepted
 
 
+def make_new_follower_composer(players: PlayerDirectory) -> Composer:
+    def compose_new_follower(event: PlayerFollowed) -> Notification:
+        follower = players.display_name(event.follower_id)
+        return Notification(
+            recipient_id=event.followed_id,
+            type=NotificationType.NEW_FOLLOWER,
+            category=Category.SOCIAL,
+            message=f"Player '{follower}' started following you.",
+            data={"actor_id": event.follower_id},
+        )
+
+    return compose_new_follower
+
+
 def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type[Event], Composer]:
     return {
         PlayerLeveledUp: compose_level_up,
@@ -97,4 +112,5 @@ def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type
         ChallengeCompleted: compose_challenge_completed,
         FriendRequestSent: make_friend_request_composer(players),
         FriendRequestAccepted: make_friend_accepted_composer(players),
+        PlayerFollowed: make_new_follower_composer(players),
     }

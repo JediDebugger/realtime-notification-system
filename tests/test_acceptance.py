@@ -75,3 +75,10 @@ def test_T4_acceptance_reaches_requester_3_not_accepter_1(app):
     assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
         (3, "Player 'Aria' accepted your friend request."),
     ]
+
+
+def test_new_follower_reaches_followed_player_only(app):
+    app.social_system.player_followed(4, 1)
+    assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
+        (1, "Player 'Dax' started following you."),
+    ]

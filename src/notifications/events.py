@@ -83,3 +83,14 @@ class FriendRequestAccepted(Event):
         _check_id("accepter_id", self.accepter_id)
         _check_id("requester_id", self.requester_id)
         _check_distinct("accepter_id", self.accepter_id, "requester_id", self.requester_id)
+
+
+@dataclass(frozen=True)
+class PlayerFollowed(Event):
+    follower_id: int
+    followed_id: int
+
+    def __post_init__(self) -> None:
+        _check_id("follower_id", self.follower_id)
+        _check_id("followed_id", self.followed_id)
+        _check_distinct("follower_id", self.follower_id, "followed_id", self.followed_id)

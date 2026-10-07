@@ -9,6 +9,7 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerFollowed,
     PlayerLeveledUp,
 )
 from notifications.lookups import ItemCatalog, ItemInfo, PlayerDirectory, Rarity
@@ -129,3 +130,12 @@ def test_T4_acceptance_message_and_recipient():
     assert n.type is NotificationType.FRIEND_ACCEPTED
     assert n.category is Category.SOCIAL
     assert n.data == {"actor_id": 1}
+
+
+def test_follower_message_and_recipient():
+    n = compose(PlayerFollowed(4, 1))
+    assert n.recipient_id == 1
+    assert n.message == "Player 'Dax' started following you."
+    assert n.type is NotificationType.NEW_FOLLOWER
+    assert n.category is Category.SOCIAL
+    assert n.data == {"actor_id": 4}

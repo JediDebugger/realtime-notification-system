@@ -10,6 +10,7 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerFollowed,
     PlayerLeveledUp,
 )
 
@@ -37,3 +38,6 @@ class SocialSystem:
 
     def friend_request_accepted(self, accepter_id: int, requester_id: int) -> None:
         self._publisher.publish(FriendRequestAccepted(accepter_id, requester_id))
+
+    def player_followed(self, follower_id: int, followed_id: int) -> None:
+        self._publisher.publish(PlayerFollowed(follower_id, followed_id))

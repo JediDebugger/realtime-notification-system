@@ -7,6 +7,7 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerFollowed,
     PlayerLeveledUp,
 )
 
@@ -89,3 +90,14 @@ def test_accepting_own_request_is_rejected():
 def test_friend_accepted_rejects_bad_ids(accepter_id, requester_id):
     with pytest.raises(ValueError):
         FriendRequestAccepted(accepter_id, requester_id)
+
+
+def test_following_self_is_rejected():
+    with pytest.raises(ValueError):
+        PlayerFollowed(4, 4)
+
+
+@pytest.mark.parametrize(("follower_id", "followed_id"), [(-4, 1), (4, "1")])
+def test_player_followed_rejects_bad_ids(follower_id, followed_id):
+    with pytest.raises(ValueError):
+        PlayerFollowed(follower_id, followed_id)
