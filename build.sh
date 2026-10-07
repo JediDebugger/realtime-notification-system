@@ -2,8 +2,9 @@
 # Build: find Python 3.11+, create .venv, install the package and its test
 # dependency, and byte-compile the sources so syntax errors fail the build.
 #
-# Without PYTHON set, tries python3.13, python3.12, python3.11, then python3,
-# and uses the first that is 3.11 or newer (a stock Mac's python3 is 3.9).
+# Without PYTHON set, uses python3 if it is 3.11 or newer (the machine's
+# default, so the most likely to have venv and pip working); otherwise the
+# newest python3.N on PATH that is (a stock Mac's python3 is 3.9) (DEC-16).
 # Override with PYTHON=/path/to/python3.11 ./build.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -32,18 +33,38 @@ if [ -n "${PYTHON:-}" ]; then
     fi
 else
     found=""
-    for candidate in python3.13 python3.12 python3.11 python3; do
-        command -v "$candidate" >/dev/null 2>&1 || continue
-        version="$(python_version "$candidate")" || continue
-        if is_supported "$version"; then
-            PYTHON="$candidate"
-            break
+    if command -v python3 >/dev/null 2>&1 && v="$(python_version python3)"; then
+        if is_supported "$v"; then
+            PYTHON=python3
+            version="$v"
+        else
+            found="python3 $v"
         fi
-        found="${found:+$found, }$candidate $version"
-    done
+    fi
+    if [ -z "${PYTHON:-}" ]; then
+        # Every python3.N on PATH (not python3.N-config etc.), newest qualifying wins.
+        best_minor=0
+        seen=" "
+        while IFS= read -r name; do
+            case "${name#python3.}" in ''|*[!0-9]*) continue ;; esac
+            case "$seen" in *" $name "*) continue ;; esac
+            seen="$seen$name "
+            v="$(python_version "$name")" || continue
+            if is_supported "$v"; then
+                IFS=. read -r _ minor _ <<<"$v"
+                if [ "$minor" -gt "$best_minor" ]; then
+                    PYTHON="$name"
+                    version="$v"
+                    best_minor="$minor"
+                fi
+            else
+                found="${found:+$found, }$name $v"
+            fi
+        done < <(compgen -c python3.)
+    fi
     if [ -z "${PYTHON:-}" ]; then
         echo "error: Python 3.11 or newer is required, but none was found on PATH." >&2
-        echo "Tried python3.13, python3.12, python3.11 and python3; found: ${found:-none}." >&2
+        echo "Looked for python3 and python3.N; found: ${found:-none}." >&2
         echo "Install Python 3.11+, or set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
         exit 1
     fi

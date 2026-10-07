@@ -54,6 +54,27 @@ def test_judges_candidates_by_version_not_by_name(tmp_path):
     assert "Creating .venv with python3 (3.11.9)" in result.stdout
 
 
+def test_prefers_python3_when_it_is_new_enough(tmp_path):
+    result = run_build(tmp_path, {"python3": "3.11.9", "python3.13": "3.13.0"})
+    assert "Creating .venv with python3 (3.11.9)" in result.stdout
+
+
+def test_otherwise_picks_the_newest_python3_n_on_path(tmp_path):
+    # No fixed list: a python3.14 is found even though nothing names it.
+    result = run_build(tmp_path, {"python3": "3.10.0", "python3.14": "3.14.0"})
+    assert "Creating .venv with python3.14 (3.14.0)" in result.stdout
+
+
+def test_newest_is_judged_by_reported_version(tmp_path):
+    result = run_build(tmp_path, {"python3": "3.9.6", "python3.12": "3.12.1", "python3.15": "3.10.2"})
+    assert "Creating .venv with python3.12 (3.12.1)" in result.stdout
+
+
+def test_ignores_names_that_are_not_python3_n(tmp_path):
+    result = run_build(tmp_path, {"python3": "3.9.6", "python3.11": "3.11.4", "python3.13-config": "3.13.0"})
+    assert "Creating .venv with python3.11 (3.11.4)" in result.stdout
+
+
 def test_fails_clearly_when_nothing_is_new_enough(tmp_path):
     result = run_build(tmp_path, {"python3": "3.9.6"})
     assert result.returncode != 0

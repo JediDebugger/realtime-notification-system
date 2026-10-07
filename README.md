@@ -13,7 +13,7 @@ Simulated game and social systems emit events; the notification system builds ea
 ./test.sh    # runs the test suite
 ```
 
-`build.sh` looks for `python3.13`, `python3.12`, `python3.11`, then `python3`, and uses the first that is 3.11 or newer. To choose an interpreter yourself, delete `.venv` if you've already built, then run:
+`build.sh` uses `python3` if it's 3.11 or newer, and otherwise the newest `python3.N` on your `PATH` that is. To choose an interpreter yourself, delete `.venv` if you've already built, then run:
 
 ```sh
 PYTHON=/path/to/python3.12 ./build.sh
