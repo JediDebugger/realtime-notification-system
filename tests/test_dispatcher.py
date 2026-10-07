@@ -3,9 +3,10 @@ import logging
 import pytest
 
 from notifications.channels import InAppChannel
-from notifications.composers import compose_level_up
+from notifications.composers import compose_level_up, make_friend_request_composer
 from notifications.dispatcher import DispatchOutcome, NotificationDispatcher
-from notifications.events import Event, PlayerLeveledUp
+from notifications.events import Event, FriendRequestSent, PlayerLeveledUp
+from notifications.lookups import PlayerDirectory
 from notifications.notification import Category
 from notifications.preferences import InMemoryPreferenceStore
 
@@ -136,3 +137,18 @@ def test_composer_errors_are_not_swallowed(recording_channel):
     dispatcher = make_dispatcher([recording_channel], composers={PlayerLeveledUp: broken_composer})
     with pytest.raises(RuntimeError, match="composer bug"):
         dispatcher.handle(PlayerLeveledUp(1, 15))
+
+
+def test_suppression_uses_the_recipients_preferences_not_the_actors(recording_channel):
+    # Player 3 (the actor) sends player 1 (the recipient) a friend request.
+    preferences = InMemoryPreferenceStore()
+    dispatcher = make_dispatcher(
+        [recording_channel],
+        composers={FriendRequestSent: make_friend_request_composer(PlayerDirectory({3: "Cyra"}))},
+        preferences=preferences,
+    )
+    preferences.set_enabled(3, Category.SOCIAL, False)  # the actor's setting doesn't count
+    assert dispatcher.handle(FriendRequestSent(3, 1)) is DispatchOutcome.SENT
+    preferences.set_enabled(1, Category.SOCIAL, False)  # the recipient's does
+    assert dispatcher.handle(FriendRequestSent(3, 1)) is DispatchOutcome.SUPPRESSED
+    assert [n.recipient_id for n in recording_channel.received] == [1]
