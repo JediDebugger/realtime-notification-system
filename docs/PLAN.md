@@ -96,7 +96,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 14 | Friend Accepted | Outward | FR-6, T4 |
 | [x] 15 | New Follower | Outward | FR-7 |
 | [x] 16 | PvP attacked and defeated | Outward | FR-4 |
-| [ ] 17 | Full example-usage scenario | Outward | FR-15 |
+| [x] 17 | Full example-usage scenario | Outward | FR-15 |
 | [ ] 18 | README and clean-clone check | Wrap-up | D-1, D-3 |
 
 **Slice (Tasks 1–7):** `./run.sh` prints the level-up notification for player 1, end to end through every real component. Everything after that adds behaviour around a pipeline that already works.
@@ -625,6 +625,12 @@ Demo seed data in `app.py` (Task 10):
   - `tests/test_demo.py`
 
 **Scenario, in this order:** before each step, print a `> {call}` line.
+
+**Added at checkpoint 2 (user request):** the demo is the first thing graders see, so it should be easy to check against the spec.
+- Steps are grouped under three headings: the spec's four example triggers, the other event types, and filtering.
+- Each trigger line carries an aligned trailing comment saying who acts and who should be notified, e.g. `# Aria (1) accepts Cyra's (3) request → notify 3`.
+- A blank line separates steps.
+- `test_demo.py` parses the output into steps (heading, call, comment, response). It asserts the exact response under each trigger, not just that a line appears somewhere. This replaces `test_demo_shows_T1`, and adds `test_demo_separates_steps_with_blank_lines`.
 
 1. `game_engine.player_leveled_up(1, 15)`
 2. `game_engine.item_acquired(2, "SwordOfAzeroth")`
