@@ -14,9 +14,12 @@ python_version() {
     "$1" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])' 2>/dev/null
 }
 
+# 3.11 is the minimum (DEC-16). Anything that isn't a version, e.g. "unknown", fails quietly.
 is_supported() {
     local major minor
     IFS=. read -r major minor _ <<<"$1"
+    case "$major" in ''|*[!0-9]*) return 1 ;; esac
+    case "$minor" in ''|*[!0-9]*) return 1 ;; esac
     [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 11 ]; }
 }
 
@@ -65,7 +68,10 @@ else
     if [ -z "${PYTHON:-}" ]; then
         echo "error: Python 3.11 or newer is required, but none was found on PATH." >&2
         echo "Looked for python3 and python3.N; found: ${found:-none}." >&2
-        echo "Install Python 3.11+, or set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
+        echo "To install one:" >&2
+        echo "  macOS: brew install python@3.12, or the installer from https://www.python.org/downloads/" >&2
+        echo "  Debian/Ubuntu: sudo apt install python3 python3-venv (if your release's python3 is 3.11+)" >&2
+        echo "Or set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
         exit 1
     fi
 fi

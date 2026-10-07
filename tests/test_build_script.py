@@ -14,18 +14,22 @@ ROOT = Path(__file__).resolve().parent.parent
 BASH = shutil.which("bash")
 
 
-def fake_python(bin_dir: Path, name: str, version: str) -> None:
+def fake_python(bin_dir: Path, name: str, version: str | None) -> None:
+    """A version of None makes an interpreter that can't report its version."""
     script = bin_dir / name
-    script.write_text(
-        "#!/bin/sh\n"
-        f'if [ "$1" = "-c" ]; then echo "{version}"; exit 0; fi\n'
-        'echo "fake python: refusing to run $*" >&2\n'
-        "exit 1\n"
-    )
+    if version is None:
+        script.write_text("#!/bin/sh\nexit 1\n")
+    else:
+        script.write_text(
+            "#!/bin/sh\n"
+            f'if [ "$1" = "-c" ]; then echo "{version}"; exit 0; fi\n'
+            'echo "fake python: refusing to run $*" >&2\n'
+            "exit 1\n"
+        )
     script.chmod(0o755)
 
 
-def run_build(tmp_path: Path, interpreters: dict[str, str], python: str | None = None):
+def run_build(tmp_path: Path, interpreters: dict[str, str | None], python: str | None = None):
     """Run build.sh with only `interpreters` ({name: version}) on PATH.
 
     `python` names one of the fakes to pass as the PYTHON override.
@@ -94,3 +98,17 @@ def test_python_override_that_is_too_old_is_an_error(tmp_path):
     assert result.returncode != 0
     assert "Python 3.11 or newer is required" in result.stderr
     assert "Creating .venv" not in result.stdout
+
+
+def test_none_found_error_says_how_to_install_python(tmp_path):
+    result = run_build(tmp_path, {"python3": "3.9.6"})
+    assert "brew install python@3.12" in result.stderr
+    assert "python.org" in result.stderr
+    assert "sudo apt install" in result.stderr
+
+
+def test_interpreter_that_cannot_report_a_version_fails_quietly(tmp_path):
+    result = run_build(tmp_path, {"python3": None}, python="python3")
+    assert result.returncode != 0
+    assert "Python 3.11 or newer is required" in result.stderr
+    assert "integer expression expected" not in result.stderr
