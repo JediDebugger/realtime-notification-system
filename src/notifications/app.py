@@ -14,7 +14,6 @@ from notifications.producers import GameEngine, SocialSystem
 DEMO_PLAYERS = {1: "Aria", 2: "Borin", 3: "Cyra", 4: "Dax"}
 DEMO_ITEMS = {
     "SwordOfAzeroth": ItemInfo("Sword of Azeroth", Rarity.LEGENDARY),
-    "DragonScaleShield": ItemInfo("Dragon Scale Shield", Rarity.EPIC),
     "HealthPotion": ItemInfo("Health Potion", Rarity.COMMON),
 }
 

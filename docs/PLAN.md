@@ -63,7 +63,7 @@ Message templates, all in `composers.py`:
 
 Demo seed data in `app.py` (Task 10):
 - **Players:** `{1: "Aria", 2: "Borin", 3: "Cyra", 4: "Dax"}`
-- **Items:** `SwordOfAzeroth` → ("Sword of Azeroth", LEGENDARY); `DragonScaleShield` → ("Dragon Scale Shield", EPIC); `HealthPotion` → ("Health Potion", COMMON)
+- **Items:** `SwordOfAzeroth` → ("Sword of Azeroth", LEGENDARY); `HealthPotion` → ("Health Potion", COMMON)
 
 ## How to run each task
 
