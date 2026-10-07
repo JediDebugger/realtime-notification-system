@@ -122,3 +122,13 @@ def test_self_targeted_events_return_normally_and_notify_nobody(app, caplog, cal
         logging.INFO,
         f"IGNORED {event_name}: not notification-worthy",
     ) in caplog.record_tuples
+
+
+def test_T4_uses_the_requesters_preferences_not_the_accepters(app):
+    app.preferences.set_enabled(1, Category.SOCIAL, False)  # only the accepter (1) is off
+    app.social_system.friend_request_accepted(1, 3)
+    assert [n.recipient_id for n in app.in_app.delivered] == [3]
+
+    app.preferences.set_enabled(3, Category.SOCIAL, False)  # now the requester (3) is off too
+    app.social_system.friend_request_accepted(1, 3)
+    assert [n.recipient_id for n in app.in_app.delivered] == [3]  # second one suppressed
