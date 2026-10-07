@@ -23,11 +23,6 @@ def _check_level(field: str, value: object) -> None:
         raise ValueError(f"{field} must be an integer of 1 or more, got {value!r}")
 
 
-def _check_distinct(actor_field: str, actor: int, target_field: str, target: int) -> None:
-    if actor == target:
-        raise ValueError(f"{actor_field} and {target_field} must be different players, both are {actor!r}")
-
-
 @dataclass(frozen=True)
 class Event:
     """Marker base class for everything a producer publishes."""
@@ -71,7 +66,6 @@ class FriendRequestSent(Event):
     def __post_init__(self) -> None:
         _check_id("sender_id", self.sender_id)
         _check_id("recipient_id", self.recipient_id)
-        _check_distinct("sender_id", self.sender_id, "recipient_id", self.recipient_id)
 
 
 @dataclass(frozen=True)
@@ -82,7 +76,6 @@ class FriendRequestAccepted(Event):
     def __post_init__(self) -> None:
         _check_id("accepter_id", self.accepter_id)
         _check_id("requester_id", self.requester_id)
-        _check_distinct("accepter_id", self.accepter_id, "requester_id", self.requester_id)
 
 
 @dataclass(frozen=True)
@@ -93,7 +86,6 @@ class PlayerFollowed(Event):
     def __post_init__(self) -> None:
         _check_id("follower_id", self.follower_id)
         _check_id("followed_id", self.followed_id)
-        _check_distinct("follower_id", self.follower_id, "followed_id", self.followed_id)
 
 
 @dataclass(frozen=True)
@@ -104,7 +96,6 @@ class PlayerAttacked(Event):
     def __post_init__(self) -> None:
         _check_id("attacker_id", self.attacker_id)
         _check_id("victim_id", self.victim_id)
-        _check_distinct("attacker_id", self.attacker_id, "victim_id", self.victim_id)
 
 
 @dataclass(frozen=True)
@@ -115,4 +106,3 @@ class PlayerDefeated(Event):
     def __post_init__(self) -> None:
         _check_id("winner_id", self.winner_id)
         _check_id("loser_id", self.loser_id)
-        _check_distinct("winner_id", self.winner_id, "loser_id", self.loser_id)

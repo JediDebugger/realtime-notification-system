@@ -1,5 +1,7 @@
 """The spec's example triggers, end to end through build_app() and the producers."""
 
+import logging
+
 import pytest
 
 from notifications.notification import Category
@@ -98,3 +100,25 @@ def test_pvp_respects_game_events_preference(app):
     app.game_engine.player_attacked(2, 1)
     app.game_engine.player_defeated(2, 1)
     assert app.in_app.delivered == []
+
+
+@pytest.mark.parametrize(
+    ("call", "event_name"),
+    [
+        (lambda app: app.social_system.friend_request_sent(1, 1), "FriendRequestSent"),
+        (lambda app: app.social_system.friend_request_accepted(1, 1), "FriendRequestAccepted"),
+        (lambda app: app.social_system.player_followed(1, 1), "PlayerFollowed"),
+        (lambda app: app.game_engine.player_attacked(1, 1), "PlayerAttacked"),
+        (lambda app: app.game_engine.player_defeated(1, 1), "PlayerDefeated"),
+    ],
+    ids=["friend_request", "friend_accepted", "follow", "attack", "defeat"],
+)
+def test_self_targeted_events_return_normally_and_notify_nobody(app, caplog, call, event_name):
+    caplog.set_level(logging.INFO, logger="notifications")
+    call(app)  # returns normally: no ValueError reaches the game
+    assert app.in_app.delivered == []
+    assert (
+        "notifications",
+        logging.INFO,
+        f"IGNORED {event_name}: not notification-worthy",
+    ) in caplog.record_tuples

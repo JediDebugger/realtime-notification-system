@@ -66,7 +66,9 @@ def make_item_acquired_composer(items: ItemCatalog) -> Composer:
 
 
 def make_friend_request_composer(players: PlayerDirectory) -> Composer:
-    def compose_friend_request(event: FriendRequestSent) -> Notification:
+    def compose_friend_request(event: FriendRequestSent) -> Notification | None:
+        if event.sender_id == event.recipient_id:
+            return None  # self-targeted: a producer business rule, ignored here (A-18)
         sender = players.display_name(event.sender_id)
         return Notification(
             recipient_id=event.recipient_id,
@@ -80,7 +82,9 @@ def make_friend_request_composer(players: PlayerDirectory) -> Composer:
 
 
 def make_friend_accepted_composer(players: PlayerDirectory) -> Composer:
-    def compose_friend_accepted(event: FriendRequestAccepted) -> Notification:
+    def compose_friend_accepted(event: FriendRequestAccepted) -> Notification | None:
+        if event.accepter_id == event.requester_id:
+            return None  # self-targeted (A-18)
         accepter = players.display_name(event.accepter_id)
         return Notification(
             recipient_id=event.requester_id,
@@ -94,7 +98,9 @@ def make_friend_accepted_composer(players: PlayerDirectory) -> Composer:
 
 
 def make_new_follower_composer(players: PlayerDirectory) -> Composer:
-    def compose_new_follower(event: PlayerFollowed) -> Notification:
+    def compose_new_follower(event: PlayerFollowed) -> Notification | None:
+        if event.follower_id == event.followed_id:
+            return None  # self-targeted (A-18)
         follower = players.display_name(event.follower_id)
         return Notification(
             recipient_id=event.followed_id,
@@ -108,7 +114,9 @@ def make_new_follower_composer(players: PlayerDirectory) -> Composer:
 
 
 def make_player_attacked_composer(players: PlayerDirectory) -> Composer:
-    def compose_player_attacked(event: PlayerAttacked) -> Notification:
+    def compose_player_attacked(event: PlayerAttacked) -> Notification | None:
+        if event.attacker_id == event.victim_id:
+            return None  # self-targeted (A-18)
         attacker = players.display_name(event.attacker_id)
         return Notification(
             recipient_id=event.victim_id,
@@ -122,7 +130,9 @@ def make_player_attacked_composer(players: PlayerDirectory) -> Composer:
 
 
 def make_player_defeated_composer(players: PlayerDirectory) -> Composer:
-    def compose_player_defeated(event: PlayerDefeated) -> Notification:
+    def compose_player_defeated(event: PlayerDefeated) -> Notification | None:
+        if event.winner_id == event.loser_id:
+            return None  # self-targeted (A-18)
         winner = players.display_name(event.winner_id)
         return Notification(
             recipient_id=event.loser_id,

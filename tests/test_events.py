@@ -72,20 +72,10 @@ def test_challenge_completed_rejects_bad_player_id(player_id):
         ChallengeCompleted(player_id, "Dragon's Lair")
 
 
-def test_friend_request_to_self_is_rejected():
-    with pytest.raises(ValueError):
-        FriendRequestSent(3, 3)
-
-
 @pytest.mark.parametrize(("sender_id", "recipient_id"), [(0, 1), (3, -1), (True, 1), (3, "1")])
 def test_friend_request_rejects_bad_ids(sender_id, recipient_id):
     with pytest.raises(ValueError):
         FriendRequestSent(sender_id, recipient_id)
-
-
-def test_accepting_own_request_is_rejected():
-    with pytest.raises(ValueError):
-        FriendRequestAccepted(1, 1)
 
 
 @pytest.mark.parametrize(("accepter_id", "requester_id"), [(0, 3), (1, True)])
@@ -94,25 +84,10 @@ def test_friend_accepted_rejects_bad_ids(accepter_id, requester_id):
         FriendRequestAccepted(accepter_id, requester_id)
 
 
-def test_following_self_is_rejected():
-    with pytest.raises(ValueError):
-        PlayerFollowed(4, 4)
-
-
 @pytest.mark.parametrize(("follower_id", "followed_id"), [(-4, 1), (4, "1")])
 def test_player_followed_rejects_bad_ids(follower_id, followed_id):
     with pytest.raises(ValueError):
         PlayerFollowed(follower_id, followed_id)
-
-
-def test_attacking_self_is_rejected():
-    with pytest.raises(ValueError):
-        PlayerAttacked(2, 2)
-
-
-def test_defeating_self_is_rejected():
-    with pytest.raises(ValueError):
-        PlayerDefeated(2, 2)
 
 
 @pytest.mark.parametrize("event_type", [PlayerAttacked, PlayerDefeated])
@@ -120,3 +95,12 @@ def test_defeating_self_is_rejected():
 def test_pvp_events_reject_bad_ids(event_type, actor_id, target_id):
     with pytest.raises(ValueError):
         event_type(actor_id, target_id)
+
+
+# Targeting yourself is a business rule, not a shape error, so the event is
+# well-formed; the composers decide it notifies nobody (A-18, DEC-8).
+@pytest.mark.parametrize(
+    "event_type", [FriendRequestSent, FriendRequestAccepted, PlayerFollowed, PlayerAttacked, PlayerDefeated]
+)
+def test_self_targeted_events_are_well_formed(event_type):
+    event_type(2, 2)

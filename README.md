@@ -105,7 +105,8 @@ The decisions a reviewer is most likely to ask about (full log in [ARCHITECTURE.
 - **Event bus** ([DEC-1, DEC-2](docs/ARCHITECTURE.md#7-decisions)): producers only build events and call `publish()`. They don't know the notification system exists, so new consumers or a real broker can be added without touching them.
 - **Composers** ([DEC-3](docs/ARCHITECTURE.md#7-decisions)): one small function per event type decides the recipient, category, and wording. Adding an event type means adding a composer and one registry line; the dispatcher doesn't change.
 - **Two error boundaries** ([DEC-7](docs/ARCHITECTURE.md#7-decisions)):
-  - The bus catches and logs any subscriber failure, so a notification bug can't break the game's own call.
+  - A bug in the notification pipeline can't break the game's call: the bus catches and logs any subscriber failure.
+  - A malformed event (a bad id or a blank name) is the caller's bug. It's rejected with `ValueError` when the producer builds it, before anything is published.
   - The dispatcher catches only delivery errors from channels.
 - **The recipient's preferences** ([DEC-5](docs/ARCHITECTURE.md#7-decisions)): they're checked against the notification's recipient, never the actor. The store receives the whole notification, so per-event-type preferences would be a store-only change.
 - **In-process only** ([DEC-1](docs/ARCHITECTURE.md#7-decisions), [A-15](docs/REQUIREMENTS.md#4-ambiguities-and-gaps)):
@@ -119,7 +120,7 @@ The decisions a reviewer is most likely to ask about (full log in [ARCHITECTURE.
 - **Only rare-or-better items notify** (rare, epic, legendary). Unknown item ids are ignored with a warning.
 - **A friend acceptance notifies the original requester only.** `friend_request_accepted(1, 3)` notifies player 3, not player 1.
 - **Every category is on** until a player turns it off.
-- **Self-targeted social and PvP events are rejected** with `ValueError`, e.g. a friend request to yourself. So are malformed ids.
+- **Self-targeted social and PvP events notify nobody**, e.g. a friend request to yourself. The composer ignores them, the dispatcher logs `IGNORED`, and the game's call returns normally. Malformed events (bad ids, blank names) are rejected with `ValueError`.
 
 The rest are in [REQUIREMENTS.md §4](docs/REQUIREMENTS.md#4-ambiguities-and-gaps).
 

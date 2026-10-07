@@ -236,7 +236,7 @@ The other triggers take the same path. Only the composer differs, along with who
 |---|---|---|
 | Invalid event shape | `ValueError` raised at the producer call, before anything is published | (raises) |
 | No composer registered for the event type | Warning logged | `IGNORED` |
-| Composer returns `None` (common or unknown item) | Info logged | `IGNORED` |
+| Composer returns `None` (a common or unknown item, or a self-targeted social or PvP event) | Info logged | `IGNORED` |
 | Recipient has the category disabled | Info logged; the notification is discarded (A-14) | `SUPPRESSED` |
 | A channel raises | Error logged with the notification id; the remaining channels still run (A-17) | `FAILED` only if every channel raised, otherwise `SENT` |
 | A subscriber raises, e.g. a composer bug propagating out of `handle` | The bus logs `Subscriber {name} failed on {EventClass}` at ERROR with the traceback, then runs the remaining subscribers. The producer's call returns normally. | (none: `handle` didn't return) |
@@ -388,7 +388,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 
 | Layer | File | What it proves |
 |---|---|---|
-| Unit | `test_events.py` | Shape validation: non-positive ids, level below 1, empty names, and actor equal to recipient for social and PvP events. |
+| Unit | `test_events.py` | Shape validation: non-positive ids (including `True`), levels below 1, and blank names. Self-targeted events are well-formed, because that rule belongs to the composers (A-18). |
 | Unit | `test_composers.py` | For each event type: the recipient, type, category, and message. T1–T3 messages match verbatim. T4's recipient is the requester. PvP notifies the victim or loser. Common and unknown items produce `None`. An unknown player id falls back to the id. |
 | Unit | `test_notification.py`, `test_lookups.py`, `test_channels.py` | Notification defaults and immutability; name and item lookups with their fallbacks; the in-app channel's recording and output format. |
 | Unit | `test_preferences.py` | On by default. Disabling and re-enabling a category. Categories are independent of each other, and so are users. |
@@ -443,7 +443,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 | DEC-5 | `PreferenceStore.allows(notification)` | `is_enabled(user_id, category)` | Same code today, but per-type preferences become a store-only change (§3c). |
 | DEC-6 | The dispatcher sends to a sequence of channels. | A single channel | It's one line, and new channels become wiring-only (§3b). |
 | DEC-7 | Two error boundaries. The bus catches any exception a subscriber raises, logs it at ERROR with the traceback (naming the subscriber and the event class), and runs the remaining subscribers. Inside the dispatcher, only channel errors are caught (A-17); composer errors propagate to the bus. Event validation still raises at the producer, because it runs before `publish()`. | Let subscriber exceptions propagate to the producer (the original DEC-7); catch everything in the dispatcher; retries | The bus exists so producers don't depend on the notification system. If a notification bug can break `game_engine.player_leveled_up()`, that independence is gone. Catching at the bus keeps the game's call safe and leaves other subscribers unaffected, and the dispatcher doesn't hide composer bugs behind an outcome. **Revised at checkpoint 1**, at the user's request: originally the bus caught nothing, on the grounds that it had a single subscriber. |
-| DEC-8 | Shape validation lives in each event's `__post_init__`. There are no social-state checks. | Validating in the dispatcher; mirroring the social graph | See A-18. Invalid events then fail at the producer call, which is where the bug is. |
+| DEC-8 | Shape validation lives in each event's `__post_init__`, and a malformed event raises `ValueError` at the producer call. Business rules are not enforced in events. In particular, a self-targeted social or PvP event is well-formed, and its composer returns `None`, which the dispatcher logs as `IGNORED`. There are no social-state checks. | Validating in the dispatcher; mirroring the social graph; rejecting self-targeted events with `ValueError` (the original, removed after the full-repo review, S3) | See A-18. A malformed event is the caller's bug, so it fails at the producer call, where the bug is. "You can't target yourself" is a business rule the producer owns. Raising on it contradicted DEC-7 (notification problems mustn't break the game's call) and A-18 (we trust the producer's rules). |
 | DEC-9 | Use `Protocol` only at the three swap points: `EventPublisher`, `PreferenceStore`, `NotificationChannel`. | ABCs; protocols everywhere | These are the swap points in §3. A protocol is structural, so in-memory classes and test fakes satisfy it without inheriting from it. |
 | DEC-10 | Our own frozen `Notification` carries `type`, `category`, and `data` as well as `message`. | A message-only notification | See A-1. Future channels can format from the structured data. |
 | DEC-11 | The dispatcher returns a `DispatchOutcome` and logs each decision through `logging`. | Logging only; observer hooks | Tests can assert the reason, and the demo shows the log lines. |

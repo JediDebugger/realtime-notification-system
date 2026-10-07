@@ -26,7 +26,7 @@ Every task must respect these.
 These are inputs the spec implies but doesn't spell out, and the most likely to bite a user. Each has a test in the task that owns it.
 
 1. **Booleans and numeric strings as ids.** `True` and `"1"` must raise `ValueError`. Python treats `True` as the int `1`, so a naive `isinstance(x, int)` check lets it through. Tested in Task 2, and the same helper covers every later event.
-2. **Self-targeted social and PvP events.** A friend request to yourself, accepting your own request, following yourself, or attacking yourself must raise `ValueError`, and nothing is sent. Tested in Tasks 13–16.
+2. **Self-targeted social and PvP events.** A friend request to yourself, accepting your own request, following yourself, or attacking yourself must raise `ValueError`, and nothing is sent. Tested in Tasks 13–16. *Revised after the full-repo review (S3): these events are well-formed. The composers return no notification for them, the dispatcher logs `IGNORED`, and the producer's call returns normally. The tests moved to `test_composers.py` and `test_acceptance.py`.*
 3. **Blank text fields.** An empty or whitespace-only item id or challenge name must raise `ValueError`. Tested in Tasks 11–12.
 4. **Preferences on the wrong person or the wrong category.** The actor's settings must never matter, and disabling one category must not block the other. Tested in Tasks 8 and 13.
 5. **Item ids that differ only in case.** `"swordofazeroth"` isn't in the catalog. It's ignored, with a warning that names the id so the mismatch is visible. Tested in Tasks 10–11.
@@ -490,7 +490,7 @@ Demo seed data in `app.py` (Task 10):
   - `tests/test_acceptance.py`
 
 **Interfaces produced:**
-- `_check_distinct(actor_field: str, actor: int, target_field: str, target: int) -> None` in `events.py`. It raises `ValueError` when the two ids are equal.
+- `_check_distinct(actor_field: str, actor: int, target_field: str, target: int) -> None` in `events.py`. It raises `ValueError` when the two ids are equal. *(Removed after the full-repo review, S3; see Review focus 2.)*
 - `FriendRequestSent(Event)`: `sender_id: int`, `recipient_id: int`.
 - `NotificationType.FRIEND_REQUEST`.
 - A registered composer: recipient is `recipient_id`, category `SOCIAL`, data `{"actor_id": sender_id}`.

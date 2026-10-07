@@ -241,8 +241,8 @@ Each entry gives what the spec says, the assumption, and the reasoning. All were
 
 **A-18. Invalid or inconsistent events.**
 - *Spec:* Silent on cases such as accepting a request that was never sent, sending a friend request to yourself, repeated follows, or a level that isn't higher than before.
-- *Assumption:* The notification system doesn't own or check social-graph or player state. It trusts the producing system's business rules. It validates only the shape of an event: ids are positive integers, levels are ≥ 1, names are non-empty. It also rejects social and PvP events where the actor and the recipient are the same player.
-- *Reasoning:* The social system is the source of truth for friendships, and mirroring its state here would couple the two. Shape checks are cheap and catch programming errors.
+- *Assumption:* The notification system doesn't own or check social-graph or player state. It trusts the producing system's business rules. It validates only the shape of an event: ids are positive integers, levels are ≥ 1, names are non-empty. A malformed event raises `ValueError` when the producer builds it. **Revised after the full-repo review (S3):** a self-targeted social or PvP event, such as a friend request to yourself, is *not* rejected. "You can't target yourself" is a business rule, so it belongs to the producer. The composers return no notification for it, the dispatcher logs `IGNORED`, and the producer's call returns normally.
+- *Reasoning:* The social system is the source of truth for friendships, and mirroring its state here would couple the two. Shape checks are cheap and catch programming errors in the caller. Raising on a business rule would let a notification-side rule break the game's call, which is exactly what the bus boundary (DEC-7) exists to prevent.
 
 ### Scope
 

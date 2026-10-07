@@ -159,3 +159,11 @@ def test_defeated_message_and_recipient():
     assert n.type is NotificationType.PLAYER_DEFEATED
     assert n.category is Category.GAME
     assert n.data == {"actor_id": 2}
+
+
+@pytest.mark.parametrize(
+    "event",
+    [FriendRequestSent, FriendRequestAccepted, PlayerFollowed, PlayerAttacked, PlayerDefeated],
+)
+def test_self_targeted_events_notify_nobody(event):
+    assert compose(event(2, 2)) is None
