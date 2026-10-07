@@ -297,26 +297,47 @@ Example: "notify me about friend requests but not new followers".
 
 ### (d) Move to a distributed setup with a message broker
 
-Target shape: producers publish to a broker topic. Notification-service instances consume it and push to a real-time gateway (WebSockets), which holds the client connections.
+Target shape, in two stages (revised after the full-repo review, S6):
+
+1. **Events.** Producers publish to an `events` topic, partitioned by a key the producer has: the **acting player** (`player_id`, `sender_id`, `attacker_id`, …). A producer can't partition by recipient, because the composers decide the recipient (DEC-3).
+2. **Deliveries.** Notification-service instances consume `events`, compose, and check preferences. They then publish each notification to a `deliveries` topic, partitioned by **`recipient_id`**. Delivery workers consume `deliveries` and push to the real-time gateway (WebSockets) node that holds the player's connection. **Per-player ordering comes from this second partitioning**, because all of a player's notifications pass through one partition in order.
 
 | Change | Where | Edits existing code? |
 |---|---|---|
-| `BrokerEventPublisher` implementing `EventPublisher`: serialize, publish, partition by recipient id | new module | No. Producers are unchanged. |
+| `BrokerEventPublisher` implementing `EventPublisher`: serialize, then publish to `events`, keyed by the acting player | new module | No. Producers are unchanged. |
 | Event serialization: a type tag plus the dataclass fields, to JSON and back | new module | No. Events are already plain data. |
-| Consumer entry point: read, deserialize, `dispatcher.handle(event)`, ack. Plus a second composition root. | new modules | No. The dispatcher and composers are reused as they are. |
+| Event consumer: read, deserialize, `dispatcher.handle(event)`, ack. Its only channel is a `DeliveryTopicChannel` that publishes to `deliveries`, keyed by `recipient_id`. Plus a second composition root. | new modules | No. The dispatcher, composers and preference checks are reused; the "send" step becomes the publish. |
+| Delivery worker: consume `deliveries`, drop duplicates by notification id, push to the gateway, or to an inbox store for offline players | new service | No. |
 | DB-backed `PreferenceStore`; service clients for the player directory and item catalog | new modules | No. They satisfy the protocol or match the duck type. |
-| An in-app channel that publishes to the gateway node holding the player's connection | new channel | No. |
-| `event_id` and `occurred_at` on every event, for idempotency and ordering | `events.py` (the `Event` base, with kw-only fields) | **Yes:** the event base class. |
-| Error policy changes from log-and-continue to raise, so the consumer can retry or nack. Dedupe on `event_id`. | `dispatcher.py` | **Yes:** the dispatcher. |
+| `event_id` and `occurred_at` on every event | `events.py` (the `Event` base, with kw-only fields) | **Yes:** the event base class. |
+| Notification id derived from the event, not a fresh `uuid4`, e.g. `uuid5(NAMESPACE, f"{event_id}:{recipient_id}")` | the composers (via one small id helper) | **Yes:** the composers. |
+| Error policy changes from log-and-continue to raise, so the consumer can retry or nack | `dispatcher.py` | **Yes:** the dispatcher. |
+
+**Dedupe.** A broker delivers at least once, so a consumer that crashes before acking sees the same event again. Today `Notification.id` is a fresh `uuid4` on every compose, so the redelivered event would produce a notification with a *new* id, and nothing downstream could tell it's a duplicate. Once events carry an `event_id`, derive the notification id from it (`uuid5` of the event id and the recipient). A replay then yields the same id, and the delivery worker or the client can drop it. The recipient is part of the key so that fan-out (§3e) still gives each recipient a distinct id.
 
 **Callout:** the bus seam makes moving the *code* cheap. The real work is the *semantics* that an in-process call provides for free:
-- At-least-once delivery means duplicates, which means idempotency.
+- At-least-once delivery means duplicates, which means deterministic notification ids and idempotent delivery.
 - Retries and a dead-letter queue.
-- Per-player ordering.
+- Per-player ordering, which comes from partitioning `deliveries` by recipient, not from the producer.
 - Offline players, which need an inbox store.
 - Routing to whichever gateway node holds the player's connection.
 
 Tests that assume a notification was delivered by the time `player_leveled_up()` returns hold only for the in-process bus. The dispatcher and composer unit tests stay valid.
+
+### (e) Fan-out: one event, several recipients (design only)
+
+Examples: "also notify the winner" of a PvP fight, or "tell all of a player's followers when they reach level 50". Today one event produces at most one notification (A-10).
+
+| Change | Where | Edits existing code? |
+|---|---|---|
+| Composer contract: from "one notification or none" to "a list of notifications", where an empty list means notify nobody | `Composer` type and every composer | **Yes:** every composer, mechanically (`None` becomes `[]`, a notification becomes `[n]`). |
+| Dispatcher loop: for each notification, check *that recipient's* preference, then send. `handle` returns one outcome per notification, or a summary. | `dispatcher.py` | **Yes:** the dispatcher. |
+| Per-recipient preference checks | preference store | No. `allows(notification)` already works per notification, so each recipient's own setting applies (DEC-5). |
+| "Also notify the winner": the defeated composer returns two notifications with different wording | that composer | **Yes:** one composer. |
+| Where the follower list comes from: a follower lookup the composer queries, backed by the social system's API or a replica built from follow and unfollow events | new lookup | No, but it's new: the notification system now reads social-graph state, which A-18 avoided. |
+| Large fan-out (100k followers) must not run on the producer's call. Fan out in the event consumer of §3d, in batches, with deterministic ids per recipient. | §3d consumer | No (new). |
+
+**Callout:** the contract change touches every composer, but it's mechanical and happens once. The alternative, a second kind of "fan-out composer" next to the single ones, avoids that edit but gives the dispatcher two code paths. The real cost is the follower lookup: it's the first time the notification system depends on social state.
 
 ### Summary
 
@@ -326,7 +347,8 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 | (b) New channel, sent to everyone | `app.py` wiring | everything |
 | (b) New channel, chosen per user | `PreferenceStore` protocol and implementation, dispatcher | composers, bus, producers |
 | (c) Per-type preferences | `InMemoryPreferenceStore` | dispatcher, composers, channels |
-| (d) Broker | `Event` base class, dispatcher error policy | producers, composers, preference protocol |
+| (d) Broker | `Event` base class, notification id derivation in the composers, dispatcher error policy | producers, preference protocol, channels protocol |
+| (e) Fan-out | `Composer` contract and every composer, the dispatcher loop, a new follower lookup | producers, bus, preference store, channels |
 
 ---
 
