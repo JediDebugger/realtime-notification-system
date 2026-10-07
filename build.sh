@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build: find Python 3.11+, create .venv, install the package and its test
+# Build: create .venv with Python 3.11+, install the package and its test
 # dependency, and byte-compile the sources so syntax errors fail the build.
 #
 # Without PYTHON set, uses python3 if it is 3.11 or newer (the machine's
@@ -23,48 +23,49 @@ is_supported() {
     [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 11 ]; }
 }
 
-if [ -n "${PYTHON:-}" ]; then
-    if ! command -v "$PYTHON" >/dev/null 2>&1; then
-        echo "error: '$PYTHON' not found. Install Python 3.11 or newer, or set PYTHON=/path/to/python3.11." >&2
-        exit 1
+# Sets PYTHON and version, or exits with an error saying what was found.
+find_python() {
+    if [ -n "${PYTHON:-}" ]; then
+        if ! command -v "$PYTHON" >/dev/null 2>&1; then
+            echo "error: '$PYTHON' not found. Install Python 3.11 or newer, or set PYTHON=/path/to/python3.11." >&2
+            exit 1
+        fi
+        version="$(python_version "$PYTHON")" || version="unknown"
+        if ! is_supported "$version"; then
+            echo "error: Python 3.11 or newer is required, but '$PYTHON' is $version." >&2
+            echo "Set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
+            exit 1
+        fi
+        return
     fi
-    version="$(python_version "$PYTHON")" || version="unknown"
-    if ! is_supported "$version"; then
-        echo "error: Python 3.11 or newer is required, but '$PYTHON' is $version." >&2
-        echo "Set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
-        exit 1
-    fi
-else
-    found=""
+
+    local found="" name v minor best_minor=0 seen=" "
     if command -v python3 >/dev/null 2>&1 && v="$(python_version python3)"; then
         if is_supported "$v"; then
             PYTHON=python3
             version="$v"
-        else
-            found="python3 $v"
+            return
         fi
+        found="python3 $v"
     fi
-    if [ -z "${PYTHON:-}" ]; then
-        # Every python3.N on PATH (not python3.N-config etc.), newest qualifying wins.
-        best_minor=0
-        seen=" "
-        while IFS= read -r name; do
-            case "${name#python3.}" in ''|*[!0-9]*) continue ;; esac
-            case "$seen" in *" $name "*) continue ;; esac
-            seen="$seen$name "
-            v="$(python_version "$name")" || continue
-            if is_supported "$v"; then
-                IFS=. read -r _ minor _ <<<"$v"
-                if [ "$minor" -gt "$best_minor" ]; then
-                    PYTHON="$name"
-                    version="$v"
-                    best_minor="$minor"
-                fi
-            else
-                found="${found:+$found, }$name $v"
+    # Every python3.N on PATH (not python3.N-config etc.); the newest qualifying wins.
+    while IFS= read -r name; do
+        case "${name#python3.}" in ''|*[!0-9]*) continue ;; esac
+        case "$seen" in *" $name "*) continue ;; esac
+        seen="$seen$name "
+        v="$(python_version "$name")" || continue
+        if is_supported "$v"; then
+            IFS=. read -r _ minor _ <<<"$v"
+            if [ "$minor" -gt "$best_minor" ]; then
+                PYTHON="$name"
+                version="$v"
+                best_minor="$minor"
             fi
-        done < <(compgen -c python3.)
-    fi
+        else
+            found="${found:+$found, }$name $v"
+        fi
+    done < <(compgen -c python3.)
+
     if [ -z "${PYTHON:-}" ]; then
         echo "error: Python 3.11 or newer is required, but none was found on PATH." >&2
         echo "Looked for python3 and python3.N; found: ${found:-none}." >&2
@@ -74,11 +75,24 @@ else
         echo "Or set PYTHON=/path/to/python3.11 (or newer) and re-run ./build.sh." >&2
         exit 1
     fi
+}
+
+# A .venv whose pip can't run (e.g. left half-made by a failed venv) would
+# fail every later build, so start it again.
+if [ -d .venv ] && ! .venv/bin/python -m pip --version >/dev/null 2>&1; then
+    echo ".venv is broken (its pip doesn't run); removing it so it can be recreated"
+    rm -rf .venv
 fi
 
 if [ ! -d .venv ]; then
+    find_python
     echo "Creating .venv with $PYTHON ($version)"
-    "$PYTHON" -m venv .venv
+    if ! "$PYTHON" -m venv .venv; then
+        rm -rf .venv
+        echo "error: '$PYTHON -m venv .venv' failed, so the partial .venv was removed." >&2
+        echo "On Debian/Ubuntu this usually means the venv package is missing: sudo apt install python${version%.*}-venv" >&2
+        exit 1
+    fi
 fi
 
 .venv/bin/python -m pip install --quiet --disable-pip-version-check -e ".[dev]"
