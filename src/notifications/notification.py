@@ -23,7 +23,9 @@ class Notification:
     type: NotificationType
     category: Category
     message: str
-    data: Mapping[str, object]
+    # Left out of the hash because a mapping isn't hashable. It still counts
+    # for equality, so equal notifications still hash equally (DEC-15).
+    data: Mapping[str, object] = field(hash=False)
     id: str = field(default_factory=lambda: str(uuid4()))
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 

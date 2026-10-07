@@ -1,5 +1,5 @@
 import dataclasses
-from datetime import UTC
+from datetime import UTC, datetime
 
 import pytest
 
@@ -57,3 +57,23 @@ def test_created_at_is_utc():
 def test_category_labels_match_spec():
     assert Category.GAME.value == "Game Events"
     assert Category.SOCIAL.value == "Social Events"
+
+
+def test_notification_can_go_in_a_set():
+    n = make_notification()
+    assert n in {n}
+
+
+def test_equal_notifications_collapse_in_a_set():
+    when = datetime(2026, 10, 7, tzinfo=UTC)
+    a = make_notification(id="n-1", created_at=when)
+    b = make_notification(id="n-1", created_at=when)
+    assert a == b
+    assert len({a, b}) == 1
+
+
+def test_notifications_differing_only_in_data_are_not_equal():
+    when = datetime(2026, 10, 7, tzinfo=UTC)
+    a = make_notification(id="n-1", created_at=when, data={"level": 15})
+    b = make_notification(id="n-1", created_at=when, data={"level": 16})
+    assert a != b
