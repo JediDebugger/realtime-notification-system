@@ -13,6 +13,11 @@ def _check_id(field: str, value: object) -> None:
         raise ValueError(f"{field} must be a positive integer, got {value!r}")
 
 
+def _check_text(field: str, value: object) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a non-blank string, got {value!r}")
+
+
 def _check_level(field: str, value: object) -> None:
     if not _is_positive_int(value):
         raise ValueError(f"{field} must be an integer of 1 or more, got {value!r}")
@@ -31,3 +36,13 @@ class PlayerLeveledUp(Event):
     def __post_init__(self) -> None:
         _check_id("player_id", self.player_id)
         _check_level("new_level", self.new_level)
+
+
+@dataclass(frozen=True)
+class ItemAcquired(Event):
+    player_id: int
+    item_id: str
+
+    def __post_init__(self) -> None:
+        _check_id("player_id", self.player_id)
+        _check_text("item_id", self.item_id)

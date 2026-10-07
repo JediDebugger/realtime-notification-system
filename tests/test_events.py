@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from notifications.events import PlayerLeveledUp
+from notifications.events import ItemAcquired, PlayerLeveledUp
 
 
 def test_player_leveled_up_holds_fields():
@@ -32,3 +32,20 @@ def test_player_leveled_up_rejects_bad_level(new_level):
 
 def test_level_one_is_valid():
     assert PlayerLeveledUp(1, 1).new_level == 1
+
+
+def test_item_acquired_holds_fields():
+    event = ItemAcquired(player_id=2, item_id="SwordOfAzeroth")
+    assert (event.player_id, event.item_id) == (2, "SwordOfAzeroth")
+
+
+@pytest.mark.parametrize("player_id", [0, True, "2"])
+def test_item_acquired_rejects_bad_player_id(player_id):
+    with pytest.raises(ValueError):
+        ItemAcquired(player_id, "SwordOfAzeroth")
+
+
+@pytest.mark.parametrize("item_id", ["", "   ", None])
+def test_item_acquired_rejects_blank_item_id(item_id):
+    with pytest.raises(ValueError):
+        ItemAcquired(2, item_id)

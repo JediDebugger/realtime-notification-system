@@ -5,7 +5,7 @@ argument order: the actor comes first (A-4).
 """
 
 from notifications.bus import EventPublisher
-from notifications.events import PlayerLeveledUp
+from notifications.events import ItemAcquired, PlayerLeveledUp
 
 
 class GameEngine:
@@ -14,3 +14,6 @@ class GameEngine:
 
     def player_leveled_up(self, player_id: int, new_level: int) -> None:
         self._publisher.publish(PlayerLeveledUp(player_id, new_level))
+
+    def item_acquired(self, player_id: int, item_id: str) -> None:
+        self._publisher.publish(ItemAcquired(player_id, item_id))
