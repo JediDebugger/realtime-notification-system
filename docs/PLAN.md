@@ -165,7 +165,7 @@ Demo seed data in `app.py` (Task 10):
   - `created_at: datetime`, defaulting to `datetime.now(UTC)`
 - `Event`, a frozen dataclass marker base.
 - `PlayerLeveledUp(Event)`: `player_id: int`, `new_level: int`.
-- Private helpers in `events.py`, reused by every later event:
+- Private helpers in `events.py`, reused by every later event *(moved to `validation.py` as `check_id`, `check_level` and `check_text` after the full-repo review, DEC-19)*:
   - `_check_id(field: str, value: object) -> None`: raises `ValueError` unless the value is an `int`, not a `bool`, and greater than 0.
   - `_check_text(field: str, value: object) -> None`: raises `ValueError` unless the value is a `str` that's non-blank after `.strip()`.
 

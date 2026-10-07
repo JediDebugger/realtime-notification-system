@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from notifications.notification import Category, Notification
+from notifications.validation import check_id
 
 
 class PreferenceStore(Protocol):
@@ -16,6 +17,10 @@ class InMemoryPreferenceStore:
         self._enabled: dict[tuple[int, Category], bool] = {}
 
     def set_enabled(self, user_id: int, category: Category, enabled: bool) -> None:
+        check_id("user_id", user_id)
+        if not isinstance(category, Category):
+            # A label such as "Game Events" would be stored under a key nothing reads.
+            raise TypeError(f"category must be a Category, got {category!r}")
         self._enabled[(user_id, category)] = enabled
 
     def allows(self, notification: Notification) -> bool:

@@ -137,6 +137,7 @@ src/notifications/
   preferences.py   per-user, per-category on/off switches
   channels.py      InAppChannel (stands in for the game client)
   lookups.py       player names and the item catalog
+  validation.py    shape checks shared by events and preferences
   app.py           build_app(): wiring plus demo seed data
   __main__.py      the demo
 tests/             unit, acceptance (the spec's triggers end to end), build-script, demo

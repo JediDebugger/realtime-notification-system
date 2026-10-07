@@ -1,3 +1,5 @@
+import pytest
+
 from notifications.notification import Category, Notification, NotificationType
 from notifications.preferences import InMemoryPreferenceStore
 
@@ -41,3 +43,16 @@ def test_users_are_independent():
     store = InMemoryPreferenceStore()
     store.set_enabled(1, Category.GAME, False)
     assert store.allows(notification_for(2, Category.GAME))
+
+
+# True is an int in Python, so it would pass a plain isinstance(x, int) check.
+@pytest.mark.parametrize("user_id", [0, -1, True, "1"])
+def test_set_enabled_rejects_bad_user_ids(user_id):
+    with pytest.raises(ValueError):
+        InMemoryPreferenceStore().set_enabled(user_id, Category.GAME, False)
+
+
+def test_set_enabled_rejects_a_category_label_instead_of_a_category():
+    # Before this check, the label was stored under a key nothing ever reads.
+    with pytest.raises(TypeError):
+        InMemoryPreferenceStore().set_enabled(1, "Game Events", False)
