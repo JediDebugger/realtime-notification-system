@@ -628,7 +628,7 @@ Demo seed data in `app.py` (Task 10):
 
 **Added at checkpoint 2 (user request):** the demo is the first thing graders see, so it should be easy to check against the spec.
 - Steps are grouped under three headings: the spec's four example triggers, the other event types, and filtering.
-- Each trigger line carries an aligned trailing comment saying who acts and who should be notified, e.g. `# Aria (1) accepts Cyra's (3) request → notify 3`.
+- Each trigger line carries an aligned trailing comment saying who acts and who should be notified, e.g. `# Aria (1) accepts Cyra's (3) request -> notify 3`. The output is ASCII only (checkpoint 3): on Windows, redirecting to a file uses cp1252, which can't encode an arrow character.
 - A blank line separates steps.
 - `test_demo.py` parses the output into steps (heading, call, comment, response). It asserts the exact response under each trigger, not just that a line appears somewhere. This replaces `test_demo_shows_T1`, and adds `test_demo_separates_steps_with_blank_lines`.
 

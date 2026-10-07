@@ -9,17 +9,17 @@ FILTERING = "Filtering: common items and preferences"
 
 # (heading, trigger call, trailing comment) for every step, in order.
 EXPECTED_STEPS = [
-    (SPEC, "game_engine.player_leveled_up(1, 15)", "Aria (1) reaches level 15 → notify 1"),
-    (SPEC, 'game_engine.item_acquired(2, "SwordOfAzeroth")', "Borin (2) gets a legendary item → notify 2"),
-    (SPEC, "social_system.friend_request_sent(3, 1)", "Cyra (3) sends Aria (1) a friend request → notify 1"),
-    (SPEC, "social_system.friend_request_accepted(1, 3)", "Aria (1) accepts Cyra's (3) request → notify 3"),
-    (OTHER, "game_engine.challenge_completed(1, \"Dragon's Lair\")", "Aria (1) completes a challenge → notify 1"),
-    (OTHER, "social_system.player_followed(4, 1)", "Dax (4) follows Aria (1) → notify 1"),
-    (OTHER, "game_engine.player_attacked(2, 1)", "Borin (2) attacks Aria (1) → notify 1"),
-    (OTHER, "game_engine.player_defeated(2, 1)", "Borin (2) defeats Aria (1) → notify 1"),
-    (FILTERING, 'game_engine.item_acquired(2, "HealthPotion")', "Borin (2) gets a common item → notify nobody"),
+    (SPEC, "game_engine.player_leveled_up(1, 15)", "Aria (1) reaches level 15 -> notify 1"),
+    (SPEC, 'game_engine.item_acquired(2, "SwordOfAzeroth")', "Borin (2) gets a legendary item -> notify 2"),
+    (SPEC, "social_system.friend_request_sent(3, 1)", "Cyra (3) sends Aria (1) a friend request -> notify 1"),
+    (SPEC, "social_system.friend_request_accepted(1, 3)", "Aria (1) accepts Cyra's (3) request -> notify 3"),
+    (OTHER, "game_engine.challenge_completed(1, \"Dragon's Lair\")", "Aria (1) completes a challenge -> notify 1"),
+    (OTHER, "social_system.player_followed(4, 1)", "Dax (4) follows Aria (1) -> notify 1"),
+    (OTHER, "game_engine.player_attacked(2, 1)", "Borin (2) attacks Aria (1) -> notify 1"),
+    (OTHER, "game_engine.player_defeated(2, 1)", "Borin (2) defeats Aria (1) -> notify 1"),
+    (FILTERING, 'game_engine.item_acquired(2, "HealthPotion")', "Borin (2) gets a common item -> notify nobody"),
     (FILTERING, "preferences.set_enabled(1, Category.GAME, False)", "Aria (1) turns Game Events off"),
-    (FILTERING, "game_engine.player_leveled_up(1, 16)", "Aria (1) reaches level 16 → suppressed"),
+    (FILTERING, "game_engine.player_leveled_up(1, 16)", "Aria (1) reaches level 16 -> suppressed"),
 ]
 
 
@@ -123,3 +123,9 @@ def test_demo_shows_ignored_and_suppressed(demo_output):
     assert r["game_engine.player_leveled_up(1, 16)"] == [
         "SUPPRESSED LEVEL_UP to player 1: Game Events disabled",
     ]
+
+
+def test_demo_output_is_plain_ascii(demo_output):
+    # On Windows, redirecting stdout to a file uses cp1252, where non-ASCII
+    # characters such as an arrow make the demo crash.
+    assert demo_output.isascii()
