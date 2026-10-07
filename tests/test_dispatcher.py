@@ -87,3 +87,52 @@ def test_disabled_category_is_suppressed(recording_channel, caplog):
         logging.INFO,
         "SUPPRESSED LEVEL_UP to player 1: Game Events disabled",
     ) in caplog.record_tuples
+
+
+def test_failing_channel_is_logged_and_reported(failing_channel, caplog):
+    outcome = make_dispatcher([failing_channel]).handle(PlayerLeveledUp(1, 15))
+    assert outcome is DispatchOutcome.FAILED
+    [attempt] = failing_channel.attempted
+    errors = {
+        r.getMessage(): r
+        for r in caplog.records
+        if r.name == "notifications" and r.levelno == logging.ERROR
+    }
+    channel_error = errors[f"Channel FailingChannel failed for notification {attempt.id}"]
+    assert channel_error.exc_info is not None
+    assert "FAILED LEVEL_UP to player 1: every channel failed" in errors
+
+
+def test_other_channels_still_receive_when_one_fails(failing_channel, recording_channel):
+    outcome = make_dispatcher([failing_channel, recording_channel]).handle(PlayerLeveledUp(1, 15))
+    assert outcome is DispatchOutcome.SENT
+    assert len(recording_channel.received) == 1
+
+
+class FailsOnFirstSend:
+    def __init__(self) -> None:
+        self.calls = 0
+        self.received = []
+
+    def send(self, notification) -> None:
+        self.calls += 1
+        if self.calls == 1:
+            raise RuntimeError("first send fails")
+        self.received.append(notification)
+
+
+def test_next_event_is_processed_after_a_failure():
+    channel = FailsOnFirstSend()
+    dispatcher = make_dispatcher([channel])
+    assert dispatcher.handle(PlayerLeveledUp(1, 15)) is DispatchOutcome.FAILED
+    assert dispatcher.handle(PlayerLeveledUp(1, 16)) is DispatchOutcome.SENT
+    assert [n.data["level"] for n in channel.received] == [16]
+
+
+def test_composer_errors_are_not_swallowed(recording_channel):
+    def broken_composer(event):
+        raise RuntimeError("composer bug")
+
+    dispatcher = make_dispatcher([recording_channel], composers={PlayerLeveledUp: broken_composer})
+    with pytest.raises(RuntimeError, match="composer bug"):
+        dispatcher.handle(PlayerLeveledUp(1, 15))

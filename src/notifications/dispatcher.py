@@ -14,6 +14,7 @@ logger = logging.getLogger("notifications")
 
 class DispatchOutcome(Enum):
     SENT = auto()
+    FAILED = auto()
     SUPPRESSED = auto()
     IGNORED = auto()
 
@@ -52,8 +53,27 @@ class NotificationDispatcher:
             )
             return DispatchOutcome.SUPPRESSED
 
+        failures = 0
         for channel in self._channels:
-            channel.send(notification)
+            # Only delivery errors are caught here (A-17); composer errors
+            # propagate to the bus, which logs them (DEC-7).
+            try:
+                channel.send(notification)
+            except Exception:
+                failures += 1
+                logger.exception(
+                    "Channel %s failed for notification %s",
+                    type(channel).__name__,
+                    notification.id,
+                )
+        if failures == len(self._channels):
+            logger.error(
+                "FAILED %s to player %d: every channel failed",
+                notification.type.name,
+                notification.recipient_id,
+            )
+            return DispatchOutcome.FAILED
+
         logger.info(
             "SENT %s to player %d (%s)",
             notification.type.name,

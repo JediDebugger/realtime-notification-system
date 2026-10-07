@@ -14,9 +14,25 @@ class RecordingChannel:
         self.received.append(notification)
 
 
+class FailingChannel:
+    """Test double for a channel whose delivery always fails."""
+
+    def __init__(self) -> None:
+        self.attempted: list[Notification] = []
+
+    def send(self, notification: Notification) -> None:
+        self.attempted.append(notification)
+        raise RuntimeError("boom")
+
+
 @pytest.fixture
 def recording_channel() -> RecordingChannel:
     return RecordingChannel()
+
+
+@pytest.fixture
+def failing_channel() -> FailingChannel:
+    return FailingChannel()
 
 
 @pytest.fixture
