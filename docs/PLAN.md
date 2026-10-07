@@ -82,7 +82,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 1 | Project skeleton and build scripts | Slice | TR-6, TR-7, D-2, D-6 |
 | [x] 2 | Notification and level-up event models | Slice | FR-10, A-1, A-18 |
 | [x] 3 | Level-up composer and registry | Slice | FR-1, FR-9, FR-11 |
-| [ ] 4 | In-app channel | Slice | FR-14, TR-4 |
+| [x] 4 | In-app channel | Slice | FR-14, TR-4 |
 | [ ] 5 | Dispatcher happy path, default-on preferences | Slice | FR-9, FR-13 (default), FR-14 |
 | [ ] 6 | In-process event bus | Slice | FR-8, TR-3 |
 | [ ] 7 | Game engine, wiring, and demo: **slice complete** | Slice | FR-1, FR-8, FR-15 (T1) |
