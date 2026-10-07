@@ -6,6 +6,7 @@ from notifications.channels import InAppChannel
 from notifications.composers import compose_level_up
 from notifications.dispatcher import DispatchOutcome, NotificationDispatcher
 from notifications.events import Event, PlayerLeveledUp
+from notifications.notification import Category
 from notifications.preferences import InMemoryPreferenceStore
 
 
@@ -13,10 +14,10 @@ class Unregistered(Event):
     """An event type no composer is registered for."""
 
 
-def make_dispatcher(channels, composers=None) -> NotificationDispatcher:
+def make_dispatcher(channels, composers=None, preferences=None) -> NotificationDispatcher:
     return NotificationDispatcher(
         composers={PlayerLeveledUp: compose_level_up} if composers is None else composers,
-        preferences=InMemoryPreferenceStore(),
+        preferences=InMemoryPreferenceStore() if preferences is None else preferences,
         channels=channels,
     )
 
@@ -72,3 +73,17 @@ def test_sent_is_logged(recording_channel, caplog):
 def test_dispatcher_requires_a_channel():
     with pytest.raises(ValueError):
         make_dispatcher([])
+
+
+def test_disabled_category_is_suppressed(recording_channel, caplog):
+    caplog.set_level(logging.INFO, logger="notifications")
+    preferences = InMemoryPreferenceStore()
+    preferences.set_enabled(1, Category.GAME, False)
+    dispatcher = make_dispatcher([recording_channel], preferences=preferences)
+    assert dispatcher.handle(PlayerLeveledUp(1, 15)) is DispatchOutcome.SUPPRESSED
+    assert recording_channel.received == []
+    assert (
+        "notifications",
+        logging.INFO,
+        "SUPPRESSED LEVEL_UP to player 1: Game Events disabled",
+    ) in caplog.record_tuples

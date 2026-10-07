@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from notifications.notification import Notification
+from notifications.notification import Category, Notification
 
 
 class PreferenceStore(Protocol):
@@ -12,5 +12,11 @@ class PreferenceStore(Protocol):
 class InMemoryPreferenceStore:
     """Every category is enabled until a user turns it off (A-13)."""
 
+    def __init__(self) -> None:
+        self._enabled: dict[tuple[int, Category], bool] = {}
+
+    def set_enabled(self, user_id: int, category: Category, enabled: bool) -> None:
+        self._enabled[(user_id, category)] = enabled
+
     def allows(self, notification: Notification) -> bool:
-        return True
+        return self._enabled.get((notification.recipient_id, notification.category), True)

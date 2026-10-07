@@ -14,6 +14,7 @@ logger = logging.getLogger("notifications")
 
 class DispatchOutcome(Enum):
     SENT = auto()
+    SUPPRESSED = auto()
     IGNORED = auto()
 
 
@@ -41,6 +42,15 @@ class NotificationDispatcher:
         if notification is None:
             logger.info("IGNORED %s: not notification-worthy", event_name)
             return DispatchOutcome.IGNORED
+
+        if not self._preferences.allows(notification):
+            logger.info(
+                "SUPPRESSED %s to player %d: %s disabled",
+                notification.type.name,
+                notification.recipient_id,
+                notification.category.value,
+            )
+            return DispatchOutcome.SUPPRESSED
 
         for channel in self._channels:
             channel.send(notification)
