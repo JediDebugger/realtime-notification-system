@@ -334,7 +334,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 
 ```
 .
-├── build.sh                 # check Python ≥ 3.11, create .venv, pip install -e ".[dev]", compileall
+├── build.sh                 # find Python ≥ 3.11 (DEC-16), create .venv, pip install -e ".[dev]", compileall
 ├── run.sh                   # .venv/bin/python -m notifications
 ├── test.sh                  # .venv/bin/python -m pytest
 ├── pyproject.toml           # metadata, "dev" extra (pytest), pytest config
@@ -370,6 +370,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
     ├── test_dispatcher.py
     ├── test_bus.py
     ├── test_acceptance.py   # the spec's triggers, end to end
+    ├── test_build_script.py # build.sh interpreter discovery (DEC-16)
     └── test_demo.py         # smoke test of the run command
 ```
 
@@ -394,6 +395,7 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 | Unit | `test_dispatcher.py` | `SENT`. `SUPPRESSED` uses the **recipient's** preferences, not the actor's. `IGNORED` for an unregistered event and for a `None` composer. A failing channel is logged, gives `FAILED`, and the next event still goes through. Every channel receives the notification. |
 | Unit | `test_bus.py` | Every subscriber receives each event, in order. Publishing with no subscribers does nothing. |
 | Acceptance | `test_acceptance.py` | Runs through `build_app()` and the producers. Covers the four spec triggers exactly as written, plus challenge, follow, attack, defeat, and one suppression. Asserts both who received what and who received nothing. |
+| Script | `test_build_script.py` | `build.sh` picks the newest interpreter that is 3.11 or newer, judges candidates by version rather than name, and honours `PYTHON`. When nothing qualifies, it fails with a message listing what it found. Fake interpreters on a controlled `PATH` keep these tests fast and offline. |
 | Smoke | `test_demo.py` | `python -m notifications` exits 0 and prints the T1–T4 messages, so the run command can't silently break. |
 
 **Not doing:** coverage gates, property-based tests, or mutation testing. These are fine on a production codebase but add noise here. A possible extra if time allows: `mypy` and `ruff` in the build. That's a suggestion only, not planned.
@@ -449,3 +451,4 @@ Tests that assume a notification was delivered by the time `player_leveled_up()`
 | DEC-13 | Message templates are f-strings inside the composers. | Template files; an i18n catalog | There are 8 messages, and they can all be read in one place. |
 | DEC-14 | The demo seed data (players and items) are defaults in `build_app()`. | A separate seed module; a data file | The demo and the acceptance tests share it, and it saves a file. |
 | DEC-15 | `Notification.data` is stored as a read-only `MappingProxyType` over a shallow copy of the input, set in `__post_init__`. | Keep the caller's dict (frozen dataclasses don't freeze their contents); `frozendict` (a third-party dependency); a tuple of pairs (awkward to read) | Makes the notification immutable in practice, not just at the attribute level: no channel can alter what another channel sees, and the caller's later changes don't leak in. It uses only the standard library. The copy is shallow, so nested mutable values would still be mutable; every payload we build holds only primitives. Added at the user's request during plan review. **Revised at checkpoint 1:** a mapping proxy isn't hashable, so the generated `__hash__` made `hash(notification)` raise `TypeError`. `data` is now declared with `field(hash=False)`: it's left out of the hash but still compared for equality, so equal notifications still hash equally and notifications can go in sets and dict keys. |
+| DEC-16 | When `PYTHON` isn't set, `build.sh` tries `python3.13`, `python3.12`, `python3.11`, then `python3`, and uses the first whose reported version is 3.11 or newer. It prints the choice when it creates `.venv`. `PYTHON` still overrides discovery, and an override that is too old is an error rather than silently falling back. | Use `python3` only and ask graders to set `PYTHON` (the original); use `uv` or `pyenv` to fetch a Python (a new tool dependency); support 3.9 | On a stock Mac `python3` is 3.9, so `./build.sh` failed unless the grader knew to set `PYTHON`. Candidates are judged by the version they report, not their name. The version is parsed in bash so the check works with any interpreter. Covered by `tests/test_build_script.py`, which uses fake interpreters on a controlled `PATH` (no venv, no pip). Added at the user's request at checkpoint 3. |

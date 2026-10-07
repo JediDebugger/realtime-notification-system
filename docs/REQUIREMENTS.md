@@ -147,7 +147,7 @@ Each entry gives what the spec says, the assumption, and the reasoning. All were
 **A-3. Build tooling, OS, Python version.** → Q7
 - *Spec:* "build scripts". Nothing on OS or versions.
 - *Assumption:* Bash scripts `build.sh`, `run.sh`, and `test.sh` at the repo root, for macOS and Linux. The README also lists the equivalent raw `python -m …` commands for Windows. Python ≥ 3.11, and `build.sh` fails with a clear message on older versions.
-- *Reasoning:* Shell scripts need nothing but bash, and `make` isn't always installed. A stdlib-only runtime can't break on dependency resolution. The `python3` bundled with macOS is 3.9, and the version check makes that failure obvious.
+- *Reasoning:* Shell scripts need nothing but bash, and `make` isn't always installed. A stdlib-only runtime can't break on dependency resolution. The `python3` bundled with macOS is 3.9, and the version check makes that failure obvious. **Revised at checkpoint 3:** `build.sh` first looks for `python3.13`, `python3.12` and `python3.11` before falling back to `python3`, so a Mac with a newer Python installed builds without setting `PYTHON` (ARCHITECTURE DEC-16).
 
 **A-4. Method names.** → Q8
 - *Spec:* camelCase in C-style syntax (`gameEngine.playerLeveledUp(1, 15)`).

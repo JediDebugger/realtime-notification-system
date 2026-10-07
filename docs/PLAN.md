@@ -124,7 +124,7 @@ Demo seed data in `app.py` (Task 10):
   - setuptools with `src` layout
   - `[tool.pytest.ini_options] testpaths = ["tests"]`
 - **`build.sh`** (`set -euo pipefail`):
-  - Uses `${PYTHON:-python3}`. If its version is below 3.11, it exits non-zero with a message naming 3.11.
+  - Uses `${PYTHON:-python3}`. If its version is below 3.11, it exits non-zero with a message naming 3.11. *Revised at checkpoint 3 (DEC-16): without `PYTHON`, it tries `python3.13`, `python3.12`, `python3.11`, then `python3`, and uses the first that is 3.11 or newer. Tested in `tests/test_build_script.py`.*
   - Creates `.venv` if it's missing.
   - Runs `.venv/bin/pip install -e ".[dev]"`.
   - Runs `.venv/bin/python -m compileall -q src`.
