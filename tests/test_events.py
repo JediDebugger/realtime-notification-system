@@ -4,6 +4,7 @@ import pytest
 
 from notifications.events import (
     ChallengeCompleted,
+    FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
     PlayerLeveledUp,
@@ -77,3 +78,14 @@ def test_friend_request_to_self_is_rejected():
 def test_friend_request_rejects_bad_ids(sender_id, recipient_id):
     with pytest.raises(ValueError):
         FriendRequestSent(sender_id, recipient_id)
+
+
+def test_accepting_own_request_is_rejected():
+    with pytest.raises(ValueError):
+        FriendRequestAccepted(1, 1)
+
+
+@pytest.mark.parametrize(("accepter_id", "requester_id"), [(0, 3), (1, True)])
+def test_friend_accepted_rejects_bad_ids(accepter_id, requester_id):
+    with pytest.raises(ValueError):
+        FriendRequestAccepted(accepter_id, requester_id)

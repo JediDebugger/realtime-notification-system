@@ -6,6 +6,7 @@ from notifications.app import DEMO_ITEMS, DEMO_PLAYERS
 from notifications.composers import compose_level_up, default_composers
 from notifications.events import (
     ChallengeCompleted,
+    FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
     PlayerLeveledUp,
@@ -119,3 +120,12 @@ def test_friend_request_goes_to_recipient():
 def test_unknown_sender_falls_back_to_id():
     n = compose(FriendRequestSent(7, 1))
     assert n.message == "Player '7' has sent you a friend request."
+
+
+def test_T4_acceptance_message_and_recipient():
+    n = compose(FriendRequestAccepted(1, 3))
+    assert n.recipient_id == 3
+    assert n.message == "Player 'Aria' accepted your friend request."
+    assert n.type is NotificationType.FRIEND_ACCEPTED
+    assert n.category is Category.SOCIAL
+    assert n.data == {"actor_id": 1}

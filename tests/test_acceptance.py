@@ -65,3 +65,13 @@ def test_disabling_game_events_does_not_block_friend_requests(app):
     app.preferences.set_enabled(1, Category.GAME, False)
     app.social_system.friend_request_sent(3, 1)
     assert [n.recipient_id for n in app.in_app.delivered] == [1]
+
+
+def test_T4_acceptance_reaches_requester_3_not_accepter_1(app):
+    # Arguments are actor first, not requester first. In T3 the requester (3)
+    # comes first because they act; here user 1 acts by accepting, so the
+    # requester (3) comes second, and 3 is the one notified.
+    app.social_system.friend_request_accepted(1, 3)
+    assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
+        (3, "Player 'Aria' accepted your friend request."),
+    ]

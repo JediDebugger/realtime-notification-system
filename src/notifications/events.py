@@ -72,3 +72,14 @@ class FriendRequestSent(Event):
         _check_id("sender_id", self.sender_id)
         _check_id("recipient_id", self.recipient_id)
         _check_distinct("sender_id", self.sender_id, "recipient_id", self.recipient_id)
+
+
+@dataclass(frozen=True)
+class FriendRequestAccepted(Event):
+    accepter_id: int  # the actor comes first: the player who accepted
+    requester_id: int
+
+    def __post_init__(self) -> None:
+        _check_id("accepter_id", self.accepter_id)
+        _check_id("requester_id", self.requester_id)
+        _check_distinct("accepter_id", self.accepter_id, "requester_id", self.requester_id)

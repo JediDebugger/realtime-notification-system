@@ -18,6 +18,7 @@ class NotificationType(Enum):
     ITEM_ACQUIRED = auto()
     CHALLENGE_COMPLETED = auto()
     FRIEND_REQUEST = auto()
+    FRIEND_ACCEPTED = auto()
 
 
 @dataclass(frozen=True)

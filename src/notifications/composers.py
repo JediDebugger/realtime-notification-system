@@ -10,6 +10,7 @@ from collections.abc import Callable
 from notifications.events import (
     ChallengeCompleted,
     Event,
+    FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
     PlayerLeveledUp,
@@ -75,10 +76,25 @@ def make_friend_request_composer(players: PlayerDirectory) -> Composer:
     return compose_friend_request
 
 
+def make_friend_accepted_composer(players: PlayerDirectory) -> Composer:
+    def compose_friend_accepted(event: FriendRequestAccepted) -> Notification:
+        accepter = players.display_name(event.accepter_id)
+        return Notification(
+            recipient_id=event.requester_id,
+            type=NotificationType.FRIEND_ACCEPTED,
+            category=Category.SOCIAL,
+            message=f"Player '{accepter}' accepted your friend request.",
+            data={"actor_id": event.accepter_id},
+        )
+
+    return compose_friend_accepted
+
+
 def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type[Event], Composer]:
     return {
         PlayerLeveledUp: compose_level_up,
         ItemAcquired: make_item_acquired_composer(items),
         ChallengeCompleted: compose_challenge_completed,
         FriendRequestSent: make_friend_request_composer(players),
+        FriendRequestAccepted: make_friend_accepted_composer(players),
     }
