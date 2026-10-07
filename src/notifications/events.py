@@ -46,3 +46,13 @@ class ItemAcquired(Event):
     def __post_init__(self) -> None:
         _check_id("player_id", self.player_id)
         _check_text("item_id", self.item_id)
+
+
+@dataclass(frozen=True)
+class ChallengeCompleted(Event):
+    player_id: int
+    challenge_name: str
+
+    def __post_init__(self) -> None:
+        _check_id("player_id", self.player_id)
+        _check_text("challenge_name", self.challenge_name)

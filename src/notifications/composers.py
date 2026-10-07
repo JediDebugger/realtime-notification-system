@@ -7,7 +7,7 @@ the message says. It returns None when the event shouldn't notify anyone.
 import logging
 from collections.abc import Callable
 
-from notifications.events import Event, ItemAcquired, PlayerLeveledUp
+from notifications.events import ChallengeCompleted, Event, ItemAcquired, PlayerLeveledUp
 from notifications.lookups import ItemCatalog, PlayerDirectory, Rarity
 from notifications.notification import Category, Notification, NotificationType
 
@@ -23,6 +23,16 @@ def compose_level_up(event: PlayerLeveledUp) -> Notification:
         category=Category.GAME,
         message=f"Congratulations! You've reached level {event.new_level}!",
         data={"level": event.new_level},
+    )
+
+
+def compose_challenge_completed(event: ChallengeCompleted) -> Notification:
+    return Notification(
+        recipient_id=event.player_id,
+        type=NotificationType.CHALLENGE_COMPLETED,
+        category=Category.GAME,
+        message=f"Well done! You've completed '{event.challenge_name}'!",
+        data={"challenge": event.challenge_name},
     )
 
 
@@ -49,4 +59,5 @@ def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type
     return {
         PlayerLeveledUp: compose_level_up,
         ItemAcquired: make_item_acquired_composer(items),
+        ChallengeCompleted: compose_challenge_completed,
     }

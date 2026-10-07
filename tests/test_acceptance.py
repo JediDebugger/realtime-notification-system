@@ -35,3 +35,10 @@ def test_T2_item_acquired_reaches_player_2(app):
 def test_common_item_sends_nothing(app):
     app.game_engine.item_acquired(2, "HealthPotion")
     assert app.in_app.delivered == []
+
+
+def test_challenge_completed_reaches_player(app):
+    app.game_engine.challenge_completed(1, "Dragon's Lair")
+    assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
+        (1, "Well done! You've completed 'Dragon's Lair'!"),
+    ]

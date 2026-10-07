@@ -4,7 +4,7 @@ import pytest
 
 from notifications.app import DEMO_ITEMS, DEMO_PLAYERS
 from notifications.composers import compose_level_up, default_composers
-from notifications.events import ItemAcquired, PlayerLeveledUp
+from notifications.events import ChallengeCompleted, ItemAcquired, PlayerLeveledUp
 from notifications.lookups import ItemCatalog, ItemInfo, PlayerDirectory, Rarity
 from notifications.notification import Category, NotificationType
 
@@ -83,3 +83,16 @@ def test_unknown_item_does_not_notify_and_warns(item_id, caplog):
         logging.WARNING,
         f"Unknown item id '{item_id}'; not notifying",
     ) in caplog.record_tuples
+
+
+def test_challenge_message():
+    n = compose(ChallengeCompleted(1, "Dragon's Lair"))
+    assert n.message == "Well done! You've completed 'Dragon's Lair'!"
+
+
+def test_challenge_goes_to_the_player():
+    n = compose(ChallengeCompleted(4, "Dragon's Lair"))
+    assert n.recipient_id == 4
+    assert n.type is NotificationType.CHALLENGE_COMPLETED
+    assert n.category is Category.GAME
+    assert n.data == {"challenge": "Dragon's Lair"}

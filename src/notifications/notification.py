@@ -16,6 +16,7 @@ class Category(Enum):
 class NotificationType(Enum):
     LEVEL_UP = auto()
     ITEM_ACQUIRED = auto()
+    CHALLENGE_COMPLETED = auto()
 
 
 @dataclass(frozen=True)
