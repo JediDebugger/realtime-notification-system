@@ -10,6 +10,8 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerAttacked,
+    PlayerDefeated,
     PlayerFollowed,
     PlayerLeveledUp,
 )
@@ -27,6 +29,12 @@ class GameEngine:
 
     def challenge_completed(self, player_id: int, challenge_name: str) -> None:
         self._publisher.publish(ChallengeCompleted(player_id, challenge_name))
+
+    def player_attacked(self, attacker_id: int, victim_id: int) -> None:
+        self._publisher.publish(PlayerAttacked(attacker_id, victim_id))
+
+    def player_defeated(self, winner_id: int, loser_id: int) -> None:
+        self._publisher.publish(PlayerDefeated(winner_id, loser_id))
 
 
 class SocialSystem:

@@ -95,7 +95,7 @@ Demo seed data in `app.py` (Task 10):
 | [x] 13 | Social system and Friend Request | Outward | FR-5, T3 |
 | [x] 14 | Friend Accepted | Outward | FR-6, T4 |
 | [x] 15 | New Follower | Outward | FR-7 |
-| [ ] 16 | PvP attacked and defeated | Outward | FR-4 |
+| [x] 16 | PvP attacked and defeated | Outward | FR-4 |
 | [ ] 17 | Full example-usage scenario | Outward | FR-15 |
 | [ ] 18 | README and clean-clone check | Wrap-up | D-1, D-3 |
 

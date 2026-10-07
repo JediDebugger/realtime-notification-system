@@ -9,6 +9,8 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerAttacked,
+    PlayerDefeated,
     PlayerFollowed,
     PlayerLeveledUp,
 )
@@ -139,3 +141,21 @@ def test_follower_message_and_recipient():
     assert n.type is NotificationType.NEW_FOLLOWER
     assert n.category is Category.SOCIAL
     assert n.data == {"actor_id": 4}
+
+
+def test_attacked_message_and_recipient():
+    n = compose(PlayerAttacked(2, 1))
+    assert n.recipient_id == 1
+    assert n.message == "Player 'Borin' is attacking you!"
+    assert n.type is NotificationType.PLAYER_ATTACKED
+    assert n.category is Category.GAME
+    assert n.data == {"actor_id": 2}
+
+
+def test_defeated_message_and_recipient():
+    n = compose(PlayerDefeated(2, 1))
+    assert n.recipient_id == 1
+    assert n.message == "You've been defeated by Player 'Borin'."
+    assert n.type is NotificationType.PLAYER_DEFEATED
+    assert n.category is Category.GAME
+    assert n.data == {"actor_id": 2}

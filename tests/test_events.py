@@ -7,6 +7,8 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerAttacked,
+    PlayerDefeated,
     PlayerFollowed,
     PlayerLeveledUp,
 )
@@ -101,3 +103,20 @@ def test_following_self_is_rejected():
 def test_player_followed_rejects_bad_ids(follower_id, followed_id):
     with pytest.raises(ValueError):
         PlayerFollowed(follower_id, followed_id)
+
+
+def test_attacking_self_is_rejected():
+    with pytest.raises(ValueError):
+        PlayerAttacked(2, 2)
+
+
+def test_defeating_self_is_rejected():
+    with pytest.raises(ValueError):
+        PlayerDefeated(2, 2)
+
+
+@pytest.mark.parametrize("event_type", [PlayerAttacked, PlayerDefeated])
+@pytest.mark.parametrize(("actor_id", "target_id"), [(0, 1), (2, True)])
+def test_pvp_events_reject_bad_ids(event_type, actor_id, target_id):
+    with pytest.raises(ValueError):
+        event_type(actor_id, target_id)

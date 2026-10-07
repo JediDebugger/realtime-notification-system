@@ -13,6 +13,8 @@ from notifications.events import (
     FriendRequestAccepted,
     FriendRequestSent,
     ItemAcquired,
+    PlayerAttacked,
+    PlayerDefeated,
     PlayerFollowed,
     PlayerLeveledUp,
 )
@@ -105,6 +107,34 @@ def make_new_follower_composer(players: PlayerDirectory) -> Composer:
     return compose_new_follower
 
 
+def make_player_attacked_composer(players: PlayerDirectory) -> Composer:
+    def compose_player_attacked(event: PlayerAttacked) -> Notification:
+        attacker = players.display_name(event.attacker_id)
+        return Notification(
+            recipient_id=event.victim_id,
+            type=NotificationType.PLAYER_ATTACKED,
+            category=Category.GAME,
+            message=f"Player '{attacker}' is attacking you!",
+            data={"actor_id": event.attacker_id},
+        )
+
+    return compose_player_attacked
+
+
+def make_player_defeated_composer(players: PlayerDirectory) -> Composer:
+    def compose_player_defeated(event: PlayerDefeated) -> Notification:
+        winner = players.display_name(event.winner_id)
+        return Notification(
+            recipient_id=event.loser_id,
+            type=NotificationType.PLAYER_DEFEATED,
+            category=Category.GAME,
+            message=f"You've been defeated by Player '{winner}'.",
+            data={"actor_id": event.winner_id},
+        )
+
+    return compose_player_defeated
+
+
 def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type[Event], Composer]:
     return {
         PlayerLeveledUp: compose_level_up,
@@ -113,4 +143,6 @@ def default_composers(players: PlayerDirectory, items: ItemCatalog) -> dict[type
         FriendRequestSent: make_friend_request_composer(players),
         FriendRequestAccepted: make_friend_accepted_composer(players),
         PlayerFollowed: make_new_follower_composer(players),
+        PlayerAttacked: make_player_attacked_composer(players),
+        PlayerDefeated: make_player_defeated_composer(players),
     }

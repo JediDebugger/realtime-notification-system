@@ -82,3 +82,19 @@ def test_new_follower_reaches_followed_player_only(app):
     assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
         (1, "Player 'Dax' started following you."),
     ]
+
+
+def test_pvp_notifies_only_the_attacked_or_defeated_player(app):
+    app.game_engine.player_attacked(2, 1)
+    app.game_engine.player_defeated(2, 1)
+    assert [(n.recipient_id, n.message) for n in app.in_app.delivered] == [
+        (1, "Player 'Borin' is attacking you!"),
+        (1, "You've been defeated by Player 'Borin'."),
+    ]
+
+
+def test_pvp_respects_game_events_preference(app):
+    app.preferences.set_enabled(1, Category.GAME, False)
+    app.game_engine.player_attacked(2, 1)
+    app.game_engine.player_defeated(2, 1)
+    assert app.in_app.delivered == []

@@ -20,6 +20,8 @@ class NotificationType(Enum):
     FRIEND_REQUEST = auto()
     FRIEND_ACCEPTED = auto()
     NEW_FOLLOWER = auto()
+    PLAYER_ATTACKED = auto()
+    PLAYER_DEFEATED = auto()
 
 
 @dataclass(frozen=True)

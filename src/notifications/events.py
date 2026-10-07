@@ -94,3 +94,25 @@ class PlayerFollowed(Event):
         _check_id("follower_id", self.follower_id)
         _check_id("followed_id", self.followed_id)
         _check_distinct("follower_id", self.follower_id, "followed_id", self.followed_id)
+
+
+@dataclass(frozen=True)
+class PlayerAttacked(Event):
+    attacker_id: int
+    victim_id: int
+
+    def __post_init__(self) -> None:
+        _check_id("attacker_id", self.attacker_id)
+        _check_id("victim_id", self.victim_id)
+        _check_distinct("attacker_id", self.attacker_id, "victim_id", self.victim_id)
+
+
+@dataclass(frozen=True)
+class PlayerDefeated(Event):
+    winner_id: int
+    loser_id: int
+
+    def __post_init__(self) -> None:
+        _check_id("winner_id", self.winner_id)
+        _check_id("loser_id", self.loser_id)
+        _check_distinct("winner_id", self.winner_id, "loser_id", self.loser_id)
